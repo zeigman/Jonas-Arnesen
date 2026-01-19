@@ -1,0 +1,1194 @@
+# Personlig Nettside - cnewton.org-stil
+
+Denne filen inneholder komplett HTML/CSS-kode for en nettside inspirert av cnewton.org.
+
+## Instruksjoner
+
+1. Kopier HTML-koden nedenfor til en fil kalt `index.html`
+2. Plasser bildefilen `P1010169.JPG` i samme mappe som `index.html`
+3. Åpne `index.html` i en nettleser for å se resultatet
+
+---
+
+## Komplett HTML/CSS-kode
+
+```html
+<!DOCTYPE html>
+<html lang="no" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jonas - Personlig Side</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           CSS VARIABLER - FARGEPALETT
+           ======================================== */
+        :root {
+            /* Neon-farger */
+            --cyan: #00FFFF;
+            --magenta: #FF00FF;
+            --cyan-dark: #00CCCC;
+            --magenta-dark: #CC00CC;
+
+            /* Mork tema (standard) */
+            --bg-dark: #0a0a0f;
+            --bg-darker: #050508;
+            --bg-gray: #1a1a24;
+            --text-light: #E0E0E8;
+            --text-muted: #8888aa;
+
+            /* Lyst tema */
+            --bg-light: #f5f5f8;
+            --bg-lighter: #ffffff;
+            --text-dark: #1a1a24;
+            --text-dark-muted: #5a5a6a;
+        }
+
+        /* Lyst tema overrides */
+        [data-theme="light"] {
+            --bg-dark: var(--bg-light);
+            --bg-darker: var(--bg-lighter);
+            --bg-gray: #e8e8f0;
+            --text-light: var(--text-dark);
+            --text-muted: var(--text-dark-muted);
+            --cyan: #00CCCC;
+            --magenta: #CC00CC;
+        }
+
+        /* ========================================
+           RESET OG BASE-STILER
+           ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ========================================
+           PAGE LOADER
+           ======================================== */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-darker);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .page-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader-text {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            color: var(--cyan);
+            animation: loaderPulse 1s ease-in-out infinite;
+        }
+
+        .loader-bar {
+            width: 200px;
+            height: 4px;
+            background: var(--bg-gray);
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .loader-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+            animation: loadProgress 1s ease-out forwards;
+        }
+
+        @keyframes loaderPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes loadProgress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        /* ========================================
+           HEADER / NAVIGASJON
+           ======================================== */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--bg-darker), transparent);
+        }
+
+        .logo {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: var(--text-light);
+            transition: color 0.3s ease;
+        }
+
+        .logo:hover {
+            color: var(--cyan);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        nav a {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--text-muted);
+            padding: 0.5rem 1rem;
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--magenta);
+            color: var(--magenta);
+        }
+
+        /* ========================================
+           HERO-SEKSJON
+           ======================================== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 6rem 4rem 4rem;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: center;
+        }
+
+        .hero-text {
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: slideIn 1s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .hero-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-label::before {
+            content: '>';
+            color: var(--cyan);
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .hero-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 800;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        .tech-text {
+            color: var(--cyan);
+            font-weight: 700;
+            animation: textGlow 6s ease-in-out infinite;
+        }
+
+        @keyframes textGlow {
+            0%, 100% { filter: drop-shadow(0 0 5px var(--cyan)); }
+            50% { filter: drop-shadow(0 0 20px var(--cyan)); }
+        }
+
+        .signal-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .signal-link:hover {
+            color: var(--magenta);
+            border-color: var(--magenta);
+            text-shadow: 0 0 10px var(--magenta);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.2);
+        }
+
+        /* ========================================
+           PROFILBILDE (HEADSHOT)
+           ======================================== */
+        .hero-image {
+            display: flex;
+            justify-content: center;
+            opacity: 0;
+            transform: translateX(50px);
+            animation: slideIn 1s ease forwards;
+            animation-delay: 0.5s;
+        }
+
+        .headshot-container {
+            position: relative;
+            max-width: 450px;
+            aspect-ratio: 1;
+            cursor: pointer;
+        }
+
+        .headshot-frame {
+            position: absolute;
+            inset: -10px;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta), var(--cyan));
+            background-size: 200% 200%;
+            animation: frameRotate 10s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes frameRotate {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .headshot-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-darker);
+        }
+
+        .headshot {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.1);
+            transition: all 0.5s ease;
+        }
+
+        .headshot-container:hover .headshot {
+            filter: grayscale(0%) contrast(1);
+        }
+
+        [data-theme="light"] .headshot {
+            filter: grayscale(30%) contrast(1.05);
+        }
+
+        [data-theme="light"] .headshot-container:hover .headshot {
+            filter: grayscale(0%) contrast(1);
+        }
+
+        .headshot-inner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 255, 0.3));
+            mix-blend-mode: color;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        .headshot-container:hover .headshot-inner::before {
+            opacity: 0;
+        }
+
+        /* Pixel-hjorner */
+        .pixel-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            z-index: 10;
+        }
+
+        .pixel-corner--tl {
+            top: -5px;
+            left: -5px;
+            background: var(--cyan);
+        }
+
+        .pixel-corner--tr {
+            top: -5px;
+            right: -5px;
+            background: var(--cyan);
+        }
+
+        .pixel-corner--bl {
+            bottom: -5px;
+            left: -5px;
+            background: var(--magenta);
+        }
+
+        .pixel-corner--br {
+            bottom: -5px;
+            right: -5px;
+            background: var(--magenta);
+        }
+
+        /* Spin-animasjon ved klikk */
+        .headshot-container.clicked .headshot-inner {
+            animation: headshotSpin 0.8s ease;
+        }
+
+        @keyframes headshotSpin {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(5deg); }
+            50% { transform: scale(1.05) rotate(-3deg); }
+            75% { transform: scale(1.08) rotate(2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* ========================================
+           SCROLL-INDIKATOR
+           ======================================== */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator span {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+        }
+
+        .scroll-arrow {
+            width: 20px;
+            height: 20px;
+            border-right: 2px solid var(--cyan);
+            border-bottom: 2px solid var(--cyan);
+            transform: rotate(45deg);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* ========================================
+           PROSJEKTER-SEKSJON
+           ======================================== */
+        .projects {
+            padding: 6rem 4rem;
+            background: var(--bg-darker);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ========================================
+           PROSJEKT-KORT
+           ======================================== */
+        .project-card {
+            background: var(--bg-gray);
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .project-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .project-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(0, 255, 255, 0.1);
+        }
+
+        [data-theme="light"] .project-card {
+            background: var(--bg-lighter);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="light"] .project-card:hover {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 60px rgba(0, 204, 204, 0.1);
+        }
+
+        .project-icon {
+            width: 60px;
+            height: 60px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-icon span {
+            background: var(--cyan);
+            transition: transform 0.3s ease;
+        }
+
+        .project-card:hover .project-icon span {
+            animation: pixelPulse 0.5s ease;
+        }
+
+        .project-card:nth-child(2) .project-icon span {
+            background: var(--magenta);
+        }
+
+        @keyframes pixelPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.8); }
+            100% { transform: scale(1); }
+        }
+
+        .project-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .project-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .project-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: var(--cyan);
+            transition: all 0.3s ease;
+        }
+
+        .project-card:nth-child(2) .project-link {
+            color: var(--magenta);
+        }
+
+        .project-link::after {
+            content: '\2192';
+            transition: transform 0.3s ease;
+        }
+
+        .project-link:hover {
+            gap: 16px;
+        }
+
+        .project-link:hover::after {
+            transform: translateX(4px);
+        }
+
+        /* Nylige innlegg */
+        .recent-posts {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .project-card:nth-child(2) .recent-posts {
+            border-top-color: rgba(255, 0, 255, 0.2);
+        }
+
+        .recent-posts-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .recent-posts-list {
+            list-style: none;
+        }
+
+        .recent-posts-list li {
+            padding: 0.5rem 0;
+        }
+
+        .recent-posts-list a {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+
+        .recent-posts-list a:hover {
+            color: var(--text-light);
+        }
+
+        /* ========================================
+           BIO-SEKSJON
+           ======================================== */
+        .bio {
+            padding: 6rem 4rem;
+            background: var(--bg-gray);
+            position: relative;
+        }
+
+        .bio::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--cyan));
+        }
+
+        .bio-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .bio-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .bio-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-light);
+        }
+
+        .bio-text::first-letter {
+            font-size: 4rem;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            float: left;
+            line-height: 1;
+            margin-right: 1rem;
+            color: var(--cyan);
+        }
+
+        /* ========================================
+           FOOTER
+           ======================================== */
+        footer {
+            padding: 3rem 4rem;
+            background: var(--bg-darker);
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--cyan);
+        }
+
+        .footer-copyright {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .footer-copyright span {
+            font-family: 'Silkscreen', cursive;
+        }
+
+        /* ========================================
+           BACK TO TOP-KNAPP
+           ======================================== */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border: 1px solid var(--cyan);
+            background: var(--bg-darker);
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            border-top: 2px solid var(--cyan);
+            border-left: 2px solid var(--cyan);
+            transform: translate(-50%, -30%) rotate(45deg);
+        }
+
+        .back-to-top:hover {
+            background: var(--cyan);
+        }
+
+        .back-to-top:hover::before {
+            border-color: var(--bg-darker);
+        }
+
+        /* ========================================
+           FLYTENDE PIXLER (DEKORASJON)
+           ======================================== */
+        .floating-pixels {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .pixel-float {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            animation: pixelFloat 8s infinite ease-in-out;
+        }
+
+        .pixel-float:nth-child(1) { top: 20%; left: 10%; background: var(--cyan); animation-delay: 0s; }
+        .pixel-float:nth-child(2) { top: 60%; left: 85%; background: var(--magenta); animation-delay: 1s; }
+        .pixel-float:nth-child(3) { top: 30%; left: 70%; background: var(--cyan); animation-delay: 2s; }
+        .pixel-float:nth-child(4) { top: 80%; left: 20%; background: var(--magenta); animation-delay: 3s; }
+        .pixel-float:nth-child(5) { top: 50%; left: 50%; background: var(--cyan); animation-delay: 4s; }
+
+        @keyframes pixelFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+            25% { transform: translateY(-30px) rotate(90deg); opacity: 0.3; }
+            50% { transform: translateY(-10px) rotate(180deg); opacity: 0.8; }
+            75% { transform: translateY(-40px) rotate(270deg); opacity: 0.4; }
+        }
+
+        /* ========================================
+           RESPONSIVT DESIGN
+           ======================================== */
+        @media (max-width: 968px) {
+            header {
+                padding: 1rem 2rem;
+            }
+
+            nav {
+                gap: 1rem;
+            }
+
+            nav a {
+                font-size: 0.55rem;
+            }
+
+            .hero {
+                padding: 4rem 2rem;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .hero-text {
+                order: 2;
+                text-align: center;
+            }
+
+            .hero-subtitle {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-image {
+                order: 1;
+            }
+
+            .headshot-container {
+                max-width: 300px;
+            }
+
+            .projects {
+                padding: 4rem 2rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bio {
+                padding: 4rem 2rem;
+            }
+
+            footer {
+                padding: 2rem;
+            }
+
+            .footer-links {
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .project-card {
+                padding: 2rem;
+            }
+
+            .back-to-top {
+                width: 40px;
+                height: 40px;
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Loader -->
+    <div class="page-loader">
+        <div class="loader-text">LOADING</div>
+        <div class="loader-bar">
+            <div class="loader-progress"></div>
+        </div>
+    </div>
+
+    <!-- Flytende pixler (dekorasjon) -->
+    <div class="floating-pixels">
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <a href="#" class="logo">jonas.org</a>
+        <nav>
+            <a href="#projects">KURS</a>
+            <a href="#bio">OM MEG</a>
+            <a href="https://github.com" target="_blank">GITHUB</a>
+            <a href="mailto:epost@eksempel.no">KONTAKT</a>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span class="theme-toggle-text">LIGHT</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Hero-seksjon -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-label">VELKOMMEN</div>
+                <h1 class="hero-title">Jonas</h1>
+                <p class="hero-subtitle">
+                    Student og eksamenshjelper. Deler ressurser for
+                    <span class="tech-text">MINA200</span> og
+                    <span class="tech-text">MFME200</span>.
+                </p>
+                <a href="mailto:epost@eksempel.no" class="signal-link">
+                    KONTAKT MEG
+                </a>
+            </div>
+            <div class="hero-image">
+                <div class="headshot-container" onclick="this.classList.toggle('clicked')">
+                    <div class="headshot-frame"></div>
+                    <div class="headshot-inner">
+                        <img src="P1010169.JPG" alt="Profilbilde" class="headshot">
+                    </div>
+                    <div class="pixel-corner pixel-corner--tl"></div>
+                    <div class="pixel-corner pixel-corner--tr"></div>
+                    <div class="pixel-corner pixel-corner--bl"></div>
+                    <div class="pixel-corner pixel-corner--br"></div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>SCROLL</span>
+            <div class="scroll-arrow"></div>
+        </div>
+    </section>
+
+    <!-- Prosjekter-seksjon -->
+    <section class="projects" id="projects">
+        <div class="section-header">
+            <div class="section-label">EKSAMENSHJELP</div>
+            <h2 class="section-title">Ressurser</h2>
+        </div>
+        <div class="projects-grid">
+            <!-- MINA200 Kort -->
+            <div class="project-card">
+                <div class="project-icon">
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                </div>
+                <h3 class="project-name">MINA200</h3>
+                <p class="project-description">
+                    Samling av ressurser, notater og tidligere eksamensoppgaver
+                    for MINA200. Alt du trenger for a forberede deg til eksamen.
+                </p>
+                <a href="#" class="project-link">SE RESSURSER</a>
+                <div class="recent-posts">
+                    <div class="recent-posts-label">NYLIG LAGT TIL:</div>
+                    <ul class="recent-posts-list">
+                        <li><a href="#">Eksamensoppgaver 2024</a></li>
+                        <li><a href="#">Sammendrag kapittel 1-5</a></li>
+                        <li><a href="#">Ovelseoppgaver med losninger</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- MFME200 Kort -->
+            <div class="project-card">
+                <div class="project-icon">
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                </div>
+                <h3 class="project-name">MFME200</h3>
+                <p class="project-description">
+                    Komplett ressurssamling for MFME200 med formler,
+                    eksempler og eksamenstips fra tidligere studenter.
+                </p>
+                <a href="#" class="project-link">SE RESSURSER</a>
+                <div class="recent-posts">
+                    <div class="recent-posts-label">NYLIG LAGT TIL:</div>
+                    <ul class="recent-posts-list">
+                        <li><a href="#">Formelark</a></li>
+                        <li><a href="#">Losningsforslag eksamen H23</a></li>
+                        <li><a href="#">Viktige begreper</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bio-seksjon -->
+    <section class="bio" id="bio">
+        <div class="bio-content">
+            <div class="bio-label">OM MEG</div>
+            <p class="bio-text">
+                Jeg er en student som brenner for a dele kunnskap og hjelpe
+                medstudenter med eksamensforberedelser. Denne siden er laget
+                for a samle nyttige ressurser for MINA200 og MFME200.
+                Alle ressursene er basert pa egne notater og erfaringer fra
+                kursene. Ta gjerne kontakt hvis du har sporsmal eller
+                onsker a bidra med egne ressurser.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="#projects">MINA200</a>
+            <a href="#projects">MFME200</a>
+            <a href="mailto:epost@eksempel.no">KONTAKT</a>
+        </div>
+        <p class="footer-copyright">
+            &copy; 2026 Jonas <span>_</span>
+        </p>
+    </footer>
+
+    <!-- Back to Top-knapp -->
+    <button class="back-to-top" onclick="scrollToTop()"></button>
+
+    <script>
+        // Page Loader
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelector('.page-loader').classList.add('hidden');
+            }, 1300);
+        });
+
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+
+            const toggleText = document.querySelector('.theme-toggle-text');
+            toggleText.textContent = newTheme === 'dark' ? 'LIGHT' : 'DARK';
+
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle-text').textContent =
+                savedTheme === 'dark' ? 'LIGHT' : 'DARK';
+        }
+
+        // Scroll to Top
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Show/hide back to top button
+        window.addEventListener('scroll', () => {
+            const backToTop = document.querySelector('.back-to-top');
+            if (window.scrollY > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        // Animate project cards on scroll
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('visible');
+                    }, index * 200);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.project-card').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
+```
+
+---
+
+## Slik bruker du koden
+
+### 1. Lagre filen
+Kopier HTML-koden ovenfor og lagre den som `index.html` i samme mappe som profilbildet ditt (`P1010169.JPG`).
+
+### 2. Test lokalt
+Apne `index.html` i en nettleser for a se nettsiden.
+
+### 3. Tilpasninger du kan gjore
+
+**Endre navn og tekst:**
+- Sok etter "Jonas" i koden og erstatt med ditt eget navn
+- Rediger teksten i `hero-subtitle` og `bio-text` seksjonene
+
+**Endre linker:**
+- Oppdater `href`-attributtene i navigasjonen og kortene
+- Erstatt `epost@eksempel.no` med din egen e-postadresse
+
+**Endre farger:**
+- Modifiser CSS-variablene i `:root` for a endre fargepaletten
+- `--cyan` og `--magenta` er hovedfargene
+
+**Legge til flere ressurser:**
+- Kopier en `<li>`-blokk i `recent-posts-list` for a legge til flere linker
+
+### 4. Publisering
+
+**GitHub Pages (anbefalt):**
+1. Opprett et nytt repository pa GitHub
+2. Last opp `index.html` og `P1010169.JPG`
+3. Ga til Settings > Pages > velg "main" branch
+4. Siden blir tilgjengelig pa `brukernavn.github.io/reponavn`
+
+**Netlify:**
+1. Dra og slipp mappen med filene pa netlify.com/drop
+2. Fa en umiddelbar URL
+
+---
+
+## Funksjoner inkludert
+
+- Mork/lys tema-bytte med lagring i localStorage
+- Animert page loader
+- Scroll-animasjoner for prosjektkort
+- Responsivt design for mobil og desktop
+- Interaktivt profilbilde med klikk-animasjon
+- Flytende pixel-dekorasjoner
+- Back-to-top knapp
+- Gradient-effekter og neon-stil
+
