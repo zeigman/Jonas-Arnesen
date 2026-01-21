@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="no" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris - Jonas</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           CSS VARIABLER - FARGEPALETT
+           ======================================== */
+        :root {
+            /* Neon-farger */
+            --cyan: #00FFFF;
+            --magenta: #FF00FF;
+            --cyan-dark: #00CCCC;
+            --magenta-dark: #CC00CC;
+
+            /* Mork tema (standard) */
+            --bg-dark: #0a0a0f;
+            --bg-darker: #050508;
+            --bg-gray: #1a1a24;
+            --text-light: #E0E0E8;
+            --text-muted: #8888aa;
+
+            /* Tetris-farger */
+            --tetris-I: #00FFFF;
+            --tetris-O: #FFFF00;
+            --tetris-T: #FF00FF;
+            --tetris-S: #00FF00;
+            --tetris-Z: #FF0000;
+            --tetris-J: #0000FF;
+            --tetris-L: #FF8800;
+        }
+
+        /* Lyst tema overrides */
+        [data-theme="light"] {
+            --bg-dark: #f5f5f8;
+            --bg-darker: #ffffff;
+            --bg-gray: #e8e8f0;
+            --text-light: #1a1a24;
+            --text-muted: #5a5a6a;
+            --cyan: #00CCCC;
+            --magenta: #CC00CC;
+        }
+
+        /* ========================================
+           RESET OG BASE-STILER
+           ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ========================================
+           HEADER
+           ======================================== */
+        header {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--bg-darker), transparent);
+        }
+
+        .logo {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: var(--text-light);
+            transition: color 0.3s ease;
+        }
+
+        .logo:hover {
+            color: var(--cyan);
+        }
+
+        .back-link {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link::before {
+            content: '<';
+            color: var(--cyan);
+        }
+
+        .back-link:hover {
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* ========================================
+           HOVEDINNHOLD
+           ======================================== */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        .game-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        /* ========================================
+           SPILLCONTAINER
+           ======================================== */
+        .game-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* ========================================
+           SPILLBRETT
+           ======================================== */
+        .game-board-wrapper {
+            position: relative;
+            padding: 4px;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(20, 1fr);
+            gap: 1px;
+            background: var(--bg-darker);
+            width: 250px;
+            height: 500px;
+        }
+
+        .cell {
+            background: var(--bg-gray);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background-color 0.1s ease;
+        }
+
+        .cell.filled {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .cell.I { background: var(--tetris-I); }
+        .cell.O { background: var(--tetris-O); }
+        .cell.T { background: var(--tetris-T); }
+        .cell.S { background: var(--tetris-S); }
+        .cell.Z { background: var(--tetris-Z); }
+        .cell.J { background: var(--tetris-J); }
+        .cell.L { background: var(--tetris-L); }
+
+        /* ========================================
+           SIDEPANEL
+           ======================================== */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-width: 180px;
+        }
+
+        .info-box {
+            background: var(--bg-gray);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .info-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+        }
+
+        .info-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .info-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .info-value.level {
+            color: var(--magenta);
+        }
+
+        /* Neste brikke */
+        .next-piece-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 20px);
+            grid-template-rows: repeat(4, 20px);
+            gap: 2px;
+            background: var(--bg-darker);
+            padding: 10px;
+            justify-content: center;
+        }
+
+        .next-cell {
+            background: var(--bg-gray);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .next-cell.I { background: var(--tetris-I); }
+        .next-cell.O { background: var(--tetris-O); }
+        .next-cell.T { background: var(--tetris-T); }
+        .next-cell.S { background: var(--tetris-S); }
+        .next-cell.Z { background: var(--tetris-Z); }
+        .next-cell.J { background: var(--tetris-J); }
+        .next-cell.L { background: var(--tetris-L); }
+
+        /* ========================================
+           KONTROLLER
+           ======================================== */
+        .controls-box {
+            background: var(--bg-gray);
+            padding: 1.5rem;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .control-key {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+            color: var(--cyan);
+            background: var(--bg-darker);
+            padding: 0.25rem 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .control-action {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ========================================
+           KNAPPER
+           ======================================== */
+        .game-btn {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            padding: 1rem 2rem;
+            border: 1px solid var(--cyan);
+            background: transparent;
+            color: var(--cyan);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .game-btn:hover {
+            background: var(--cyan);
+            color: var(--bg-darker);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        .game-btn.pause {
+            border-color: var(--magenta);
+            color: var(--magenta);
+        }
+
+        .game-btn.pause:hover {
+            background: var(--magenta);
+            color: var(--bg-darker);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+        }
+
+        /* ========================================
+           GAME OVER OVERLAY
+           ======================================== */
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 8, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            gap: 2rem;
+        }
+
+        .game-over-overlay.visible {
+            display: flex;
+        }
+
+        .game-over-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--magenta), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-2px, 2px); }
+            94% { transform: translate(2px, -2px); }
+            96% { transform: translate(-2px, -2px); }
+            98% { transform: translate(2px, 2px); }
+        }
+
+        .final-score {
+            text-align: center;
+        }
+
+        .final-score-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .final-score-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        /* ========================================
+           MOBILE KONTROLLER
+           ======================================== */
+        .mobile-controls {
+            display: none;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .mobile-btn {
+            font-family: 'Silkscreen', cursive;
+            font-size: 1.5rem;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--cyan);
+            background: var(--bg-gray);
+            color: var(--cyan);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-btn:active {
+            background: var(--cyan);
+            color: var(--bg-darker);
+        }
+
+        .mobile-btn.rotate {
+            border-color: var(--magenta);
+            color: var(--magenta);
+        }
+
+        .mobile-btn.rotate:active {
+            background: var(--magenta);
+            color: var(--bg-darker);
+        }
+
+        .mobile-btn.drop {
+            width: 140px;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+        }
+
+        .mobile-controls-row {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        /* ========================================
+           FOOTER
+           ======================================== */
+        footer {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .footer-text span {
+            font-family: 'Silkscreen', cursive;
+        }
+
+        /* ========================================
+           FLYTENDE PIXLER
+           ======================================== */
+        .floating-pixels {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .pixel-float {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            animation: pixelFloat 8s infinite ease-in-out;
+        }
+
+        .pixel-float:nth-child(1) { top: 20%; left: 10%; background: var(--cyan); animation-delay: 0s; }
+        .pixel-float:nth-child(2) { top: 60%; left: 85%; background: var(--magenta); animation-delay: 1s; }
+        .pixel-float:nth-child(3) { top: 30%; left: 70%; background: var(--cyan); animation-delay: 2s; }
+        .pixel-float:nth-child(4) { top: 80%; left: 20%; background: var(--magenta); animation-delay: 3s; }
+        .pixel-float:nth-child(5) { top: 50%; left: 50%; background: var(--cyan); animation-delay: 4s; }
+
+        @keyframes pixelFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+            25% { transform: translateY(-30px) rotate(90deg); opacity: 0.3; }
+            50% { transform: translateY(-10px) rotate(180deg); opacity: 0.8; }
+            75% { transform: translateY(-40px) rotate(270deg); opacity: 0.4; }
+        }
+
+        /* ========================================
+           RESPONSIVT DESIGN
+           ======================================== */
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem 1.5rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            .game-board {
+                width: 200px;
+                height: 400px;
+            }
+
+            .side-panel {
+                min-width: 150px;
+            }
+
+            .info-value {
+                font-size: 1.5rem;
+            }
+
+            .mobile-controls {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .controls-box {
+                display: none;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .side-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .info-box {
+                flex: 1;
+                min-width: 100px;
+            }
+
+            .game-board {
+                width: 280px;
+                height: 560px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flytende pixler -->
+    <div class="floating-pixels">
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="logo">jonasarnesen.org</a>
+        <a href="index.html" class="back-link">TILBAKE</a>
+    </header>
+
+    <!-- Hovedinnhold -->
+    <main>
+        <h1 class="game-title">TETRIS</h1>
+
+        <div class="game-container">
+            <!-- Spillbrett -->
+            <div class="game-board-wrapper">
+                <div class="game-board" id="game-board"></div>
+            </div>
+
+            <!-- Sidepanel -->
+            <div class="side-panel">
+                <div class="info-box">
+                    <div class="info-label">POENG</div>
+                    <div class="info-value" id="score">0</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">NIVÅ</div>
+                    <div class="info-value level" id="level">1</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">LINJER</div>
+                    <div class="info-value" id="lines">0</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">NESTE</div>
+                    <div class="next-piece-grid" id="next-piece"></div>
+                </div>
+
+                <div class="controls-box">
+                    <div class="control-item">
+                        <span class="control-key">&#8592; &#8594;</span>
+                        <span class="control-action">Flytt</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">&#8593;</span>
+                        <span class="control-action">Roter</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">&#8595;</span>
+                        <span class="control-action">Ned</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">SPACE</span>
+                        <span class="control-action">Slipp</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">P</span>
+                        <span class="control-action">Pause</span>
+                    </div>
+                </div>
+
+                <button class="game-btn" id="start-btn" onclick="startGame()">START</button>
+                <button class="game-btn pause" id="pause-btn" onclick="togglePause()" style="display: none;">PAUSE</button>
+            </div>
+        </div>
+
+        <!-- Mobile kontroller -->
+        <div class="mobile-controls" id="mobile-controls">
+            <div class="mobile-controls-row">
+                <button class="mobile-btn rotate" onclick="rotatePiece()">&#8635;</button>
+            </div>
+            <div class="mobile-controls-row">
+                <button class="mobile-btn" onclick="movePiece(-1)">&#8592;</button>
+                <button class="mobile-btn" onclick="movePiece(0, 1)">&#8595;</button>
+                <button class="mobile-btn" onclick="movePiece(1)">&#8594;</button>
+            </div>
+            <div class="mobile-controls-row">
+                <button class="mobile-btn drop" onclick="hardDrop()">SLIPP</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Game Over Overlay -->
+    <div class="game-over-overlay" id="game-over">
+        <h2 class="game-over-title">GAME OVER</h2>
+        <div class="final-score">
+            <div class="final-score-label">ENDELIG POENGSUM</div>
+            <div class="final-score-value" id="final-score">0</div>
+        </div>
+        <button class="game-btn" onclick="restartGame()">SPILL IGJEN</button>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p class="footer-text">&copy; 2026 Jonas <span>_</span></p>
+    </footer>
+
+    <script>
+        // ========================================
+        // TETRIS SPILLOGIKK
+        // ========================================
+
+        const BOARD_WIDTH = 10;
+        const BOARD_HEIGHT = 20;
+        const EMPTY = 0;
+
+        // Tetromino-definisjoner
+        const TETROMINOES = {
+            I: {
+                shape: [
+                    [0, 0, 0, 0],
+                    [1, 1, 1, 1],
+                    [0, 0, 0, 0],
+                    [0, 0, 0, 0]
+                ],
+                color: 'I'
+            },
+            O: {
+                shape: [
+                    [1, 1],
+                    [1, 1]
+                ],
+                color: 'O'
+            },
+            T: {
+                shape: [
+                    [0, 1, 0],
+                    [1, 1, 1],
+                    [0, 0, 0]
+                ],
+                color: 'T'
+            },
+            S: {
+                shape: [
+                    [0, 1, 1],
+                    [1, 1, 0],
+                    [0, 0, 0]
+                ],
+                color: 'S'
+            },
+            Z: {
+                shape: [
+                    [1, 1, 0],
+                    [0, 1, 1],
+                    [0, 0, 0]
+                ],
+                color: 'Z'
+            },
+            J: {
+                shape: [
+                    [1, 0, 0],
+                    [1, 1, 1],
+                    [0, 0, 0]
+                ],
+                color: 'J'
+            },
+            L: {
+                shape: [
+                    [0, 0, 1],
+                    [1, 1, 1],
+                    [0, 0, 0]
+                ],
+                color: 'L'
+            }
+        };
+
+        const TETROMINO_NAMES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+        // Spilltilstand
+        let board = [];
+        let currentPiece = null;
+        let currentX = 0;
+        let currentY = 0;
+        let nextPiece = null;
+        let score = 0;
+        let level = 1;
+        let lines = 0;
+        let gameInterval = null;
+        let isPaused = false;
+        let isGameOver = false;
+        let isPlaying = false;
+
+        // DOM-elementer
+        const boardElement = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const linesElement = document.getElementById('lines');
+        const nextPieceElement = document.getElementById('next-piece');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const gameOverOverlay = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+        const mobileControls = document.getElementById('mobile-controls');
+
+        // Initialiser spillbrettet
+        function initBoard() {
+            board = [];
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                board[y] = [];
+                for (let x = 0; x < BOARD_WIDTH; x++) {
+                    board[y][x] = EMPTY;
+                }
+            }
+        }
+
+        // Tegn spillbrettet
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                for (let x = 0; x < BOARD_WIDTH; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (board[y][x] !== EMPTY) {
+                        cell.classList.add('filled', board[y][x]);
+                    }
+                    boardElement.appendChild(cell);
+                }
+            }
+            renderCurrentPiece();
+        }
+
+        // Tegn nåværende brikke
+        function renderCurrentPiece() {
+            if (!currentPiece) return;
+
+            const cells = boardElement.querySelectorAll('.cell');
+            const shape = currentPiece.shape;
+
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const boardY = currentY + y;
+                        const boardX = currentX + x;
+                        if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                            const index = boardY * BOARD_WIDTH + boardX;
+                            cells[index].classList.add('filled', currentPiece.color);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Tegn neste brikke
+        function renderNextPiece() {
+            nextPieceElement.innerHTML = '';
+            for (let y = 0; y < 4; y++) {
+                for (let x = 0; x < 4; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'next-cell';
+                    nextPieceElement.appendChild(cell);
+                }
+            }
+
+            if (!nextPiece) return;
+
+            const cells = nextPieceElement.querySelectorAll('.next-cell');
+            const shape = nextPiece.shape;
+
+            // Sentrer brikken i 4x4 grid
+            const offsetX = Math.floor((4 - shape[0].length) / 2);
+            const offsetY = Math.floor((4 - shape.length) / 2);
+
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const index = (y + offsetY) * 4 + (x + offsetX);
+                        if (index >= 0 && index < 16) {
+                            cells[index].classList.add(nextPiece.color);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Generer tilfeldig brikke
+        function getRandomPiece() {
+            const name = TETROMINO_NAMES[Math.floor(Math.random() * TETROMINO_NAMES.length)];
+            return {
+                shape: TETROMINOES[name].shape.map(row => [...row]),
+                color: TETROMINOES[name].color
+            };
+        }
+
+        // Spawn ny brikke
+        function spawnPiece() {
+            currentPiece = nextPiece || getRandomPiece();
+            nextPiece = getRandomPiece();
+            currentX = Math.floor((BOARD_WIDTH - currentPiece.shape[0].length) / 2);
+            currentY = 0;
+
+            if (!isValidPosition(currentPiece.shape, currentX, currentY)) {
+                gameOver();
+            }
+
+            renderNextPiece();
+        }
+
+        // Sjekk om posisjon er gyldig
+        function isValidPosition(shape, x, y) {
+            for (let row = 0; row < shape.length; row++) {
+                for (let col = 0; col < shape[row].length; col++) {
+                    if (shape[row][col]) {
+                        const newX = x + col;
+                        const newY = y + row;
+
+                        if (newX < 0 || newX >= BOARD_WIDTH || newY >= BOARD_HEIGHT) {
+                            return false;
+                        }
+
+                        if (newY >= 0 && board[newY][newX] !== EMPTY) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Roter brikke
+        function rotatePiece() {
+            if (!currentPiece || isPaused || isGameOver) return;
+
+            const rotated = [];
+            const shape = currentPiece.shape;
+            const size = shape.length;
+
+            for (let y = 0; y < size; y++) {
+                rotated[y] = [];
+                for (let x = 0; x < size; x++) {
+                    rotated[y][x] = shape[size - 1 - x][y];
+                }
+            }
+
+            if (isValidPosition(rotated, currentX, currentY)) {
+                currentPiece.shape = rotated;
+                renderBoard();
+            }
+        }
+
+        // Flytt brikke
+        function movePiece(dx, dy = 0) {
+            if (!currentPiece || isPaused || isGameOver) return;
+
+            const newX = currentX + dx;
+            const newY = currentY + dy;
+
+            if (isValidPosition(currentPiece.shape, newX, newY)) {
+                currentX = newX;
+                currentY = newY;
+                renderBoard();
+            }
+        }
+
+        // Flytt brikke ned
+        function moveDown() {
+            if (!currentPiece || isPaused || isGameOver) return;
+
+            if (isValidPosition(currentPiece.shape, currentX, currentY + 1)) {
+                currentY++;
+                renderBoard();
+            } else {
+                lockPiece();
+            }
+        }
+
+        // Hard drop
+        function hardDrop() {
+            if (!currentPiece || isPaused || isGameOver) return;
+
+            let dropDistance = 0;
+            while (isValidPosition(currentPiece.shape, currentX, currentY + 1)) {
+                currentY++;
+                dropDistance++;
+            }
+            score += dropDistance * 2;
+            updateScore();
+            lockPiece();
+        }
+
+        // Lås brikke på brettet
+        function lockPiece() {
+            const shape = currentPiece.shape;
+
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const boardY = currentY + y;
+                        const boardX = currentX + x;
+                        if (boardY >= 0) {
+                            board[boardY][boardX] = currentPiece.color;
+                        }
+                    }
+                }
+            }
+
+            clearLines();
+            spawnPiece();
+            renderBoard();
+        }
+
+        // Fjern fulle linjer
+        function clearLines() {
+            let linesCleared = 0;
+
+            for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell !== EMPTY)) {
+                    board.splice(y, 1);
+                    board.unshift(Array(BOARD_WIDTH).fill(EMPTY));
+                    linesCleared++;
+                    y++;
+                }
+            }
+
+            if (linesCleared > 0) {
+                const points = [0, 100, 300, 500, 800];
+                score += points[linesCleared] * level;
+                lines += linesCleared;
+
+                // Oppdater nivå
+                const newLevel = Math.floor(lines / 10) + 1;
+                if (newLevel > level) {
+                    level = newLevel;
+                    updateSpeed();
+                }
+
+                updateScore();
+            }
+        }
+
+        // Oppdater poengvisning
+        function updateScore() {
+            scoreElement.textContent = score;
+            levelElement.textContent = level;
+            linesElement.textContent = lines;
+        }
+
+        // Oppdater spillhastighet
+        function updateSpeed() {
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                const speed = Math.max(100, 1000 - (level - 1) * 100);
+                gameInterval = setInterval(gameLoop, speed);
+            }
+        }
+
+        // Hovedspillsløyfe
+        function gameLoop() {
+            if (!isPaused && !isGameOver) {
+                moveDown();
+            }
+        }
+
+        // Start spillet
+        function startGame() {
+            initBoard();
+            score = 0;
+            level = 1;
+            lines = 0;
+            isPaused = false;
+            isGameOver = false;
+            isPlaying = true;
+
+            updateScore();
+            spawnPiece();
+            renderBoard();
+
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'block';
+            gameOverOverlay.classList.remove('visible');
+
+            // Vis mobile kontroller på mobile enheter
+            if (window.innerWidth <= 768) {
+                mobileControls.style.display = 'flex';
+            }
+
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, 1000);
+        }
+
+        // Pause/fortsett
+        function togglePause() {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? 'FORTSETT' : 'PAUSE';
+        }
+
+        // Game over
+        function gameOver() {
+            isGameOver = true;
+            isPlaying = false;
+            if (gameInterval) clearInterval(gameInterval);
+
+            finalScoreElement.textContent = score;
+            gameOverOverlay.classList.add('visible');
+
+            startBtn.style.display = 'block';
+            startBtn.textContent = 'SPILL IGJEN';
+            pauseBtn.style.display = 'none';
+        }
+
+        // Restart
+        function restartGame() {
+            gameOverOverlay.classList.remove('visible');
+            startGame();
+        }
+
+        // Tastaturkontroller
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying || isGameOver) return;
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    movePiece(-1);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    movePiece(1);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    movePiece(0, 1);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    rotatePiece();
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    hardDrop();
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+            }
+        });
+
+        // Initialiser tom visning
+        function init() {
+            initBoard();
+            renderBoard();
+
+            // Initialiser neste brikke-visning
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'next-cell';
+                nextPieceElement.appendChild(cell);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
