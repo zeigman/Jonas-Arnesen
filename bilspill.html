@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="no" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Racer - Jonas</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           CSS VARIABLER - FARGEPALETT
+           ======================================== */
+        :root {
+            /* Neon-farger */
+            --cyan: #00FFFF;
+            --magenta: #FF00FF;
+            --cyan-dark: #00CCCC;
+            --magenta-dark: #CC00CC;
+            --yellow: #FFFF00;
+            --green: #00FF00;
+            --orange: #FF8800;
+            --red: #FF0044;
+
+            /* Mork tema (standard) */
+            --bg-dark: #0a0a0f;
+            --bg-darker: #050508;
+            --bg-gray: #1a1a24;
+            --text-light: #E0E0E8;
+            --text-muted: #8888aa;
+
+            /* Vei-farger */
+            --road-dark: #1a1a2e;
+            --road-line: #3a3a5e;
+        }
+
+        /* Lyst tema overrides */
+        [data-theme="light"] {
+            --bg-dark: #f5f5f8;
+            --bg-darker: #ffffff;
+            --bg-gray: #e8e8f0;
+            --text-light: #1a1a24;
+            --text-muted: #5a5a6a;
+            --cyan: #00CCCC;
+            --magenta: #CC00CC;
+            --road-dark: #c0c0d0;
+            --road-line: #9090a0;
+        }
+
+        /* ========================================
+           RESET OG BASE-STILER
+           ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ========================================
+           HEADER
+           ======================================== */
+        header {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--bg-darker), transparent);
+        }
+
+        .logo {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: var(--text-light);
+            transition: color 0.3s ease;
+        }
+
+        .logo:hover {
+            color: var(--cyan);
+        }
+
+        .back-link {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link::before {
+            content: '<';
+            color: var(--cyan);
+        }
+
+        .back-link:hover {
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* ========================================
+           HOVEDINNHOLD
+           ======================================== */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        .game-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        /* ========================================
+           SPILLCONTAINER
+           ======================================== */
+        .game-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* ========================================
+           CANVAS OG SPILLBRETT
+           ======================================== */
+        .game-board-wrapper {
+            position: relative;
+            padding: 4px;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+        }
+
+        #gameCanvas {
+            display: block;
+            background: var(--road-dark);
+        }
+
+        /* ========================================
+           SIDEPANEL
+           ======================================== */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-width: 180px;
+        }
+
+        .info-box {
+            background: var(--bg-gray);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .info-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+        }
+
+        .info-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .info-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .info-value.speed {
+            color: var(--magenta);
+        }
+
+        .info-value.highscore {
+            color: var(--yellow);
+            font-size: 1.5rem;
+        }
+
+        /* ========================================
+           KONTROLLER
+           ======================================== */
+        .controls-box {
+            background: var(--bg-gray);
+            padding: 1.5rem;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .control-key {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+            color: var(--cyan);
+            background: var(--bg-darker);
+            padding: 0.25rem 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .control-action {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ========================================
+           KNAPPER
+           ======================================== */
+        .game-btn {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            padding: 1rem 2rem;
+            border: 1px solid var(--cyan);
+            background: transparent;
+            color: var(--cyan);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .game-btn:hover {
+            background: var(--cyan);
+            color: var(--bg-darker);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        .game-btn.pause {
+            border-color: var(--magenta);
+            color: var(--magenta);
+        }
+
+        .game-btn.pause:hover {
+            background: var(--magenta);
+            color: var(--bg-darker);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+        }
+
+        /* ========================================
+           GAME OVER OVERLAY
+           ======================================== */
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 8, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            gap: 2rem;
+        }
+
+        .game-over-overlay.visible {
+            display: flex;
+        }
+
+        .game-over-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--magenta), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-2px, 2px); }
+            94% { transform: translate(2px, -2px); }
+            96% { transform: translate(-2px, -2px); }
+            98% { transform: translate(2px, 2px); }
+        }
+
+        .final-score {
+            text-align: center;
+        }
+
+        .final-score-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .final-score-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .new-highscore {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: var(--yellow);
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.5; text-shadow: 0 0 5px var(--yellow); }
+            to { opacity: 1; text-shadow: 0 0 20px var(--yellow); }
+        }
+
+        /* ========================================
+           MOBILE KONTROLLER
+           ======================================== */
+        .mobile-controls {
+            display: none;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .mobile-btn {
+            font-family: 'Silkscreen', cursive;
+            font-size: 1.5rem;
+            width: 70px;
+            height: 70px;
+            border: 2px solid var(--cyan);
+            background: var(--bg-gray);
+            color: var(--cyan);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .mobile-btn:active {
+            background: var(--cyan);
+            color: var(--bg-darker);
+        }
+
+        .mobile-btn.turbo {
+            border-color: var(--magenta);
+            color: var(--magenta);
+            width: 150px;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+        }
+
+        .mobile-btn.turbo:active {
+            background: var(--magenta);
+            color: var(--bg-darker);
+        }
+
+        .mobile-controls-row {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        /* ========================================
+           FOOTER
+           ======================================== */
+        footer {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .footer-text span {
+            font-family: 'Silkscreen', cursive;
+        }
+
+        /* ========================================
+           FLYTENDE PIXLER
+           ======================================== */
+        .floating-pixels {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .pixel-float {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            animation: pixelFloat 8s infinite ease-in-out;
+        }
+
+        .pixel-float:nth-child(1) { top: 20%; left: 10%; background: var(--cyan); animation-delay: 0s; }
+        .pixel-float:nth-child(2) { top: 60%; left: 85%; background: var(--magenta); animation-delay: 1s; }
+        .pixel-float:nth-child(3) { top: 30%; left: 70%; background: var(--cyan); animation-delay: 2s; }
+        .pixel-float:nth-child(4) { top: 80%; left: 20%; background: var(--magenta); animation-delay: 3s; }
+        .pixel-float:nth-child(5) { top: 50%; left: 50%; background: var(--cyan); animation-delay: 4s; }
+
+        @keyframes pixelFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+            25% { transform: translateY(-30px) rotate(90deg); opacity: 0.3; }
+            50% { transform: translateY(-10px) rotate(180deg); opacity: 0.8; }
+            75% { transform: translateY(-40px) rotate(270deg); opacity: 0.4; }
+        }
+
+        /* ========================================
+           RESPONSIVT DESIGN
+           ======================================== */
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem 1.5rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            .side-panel {
+                min-width: 150px;
+            }
+
+            .info-value {
+                font-size: 1.5rem;
+            }
+
+            .mobile-controls {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .controls-box {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .side-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .info-box {
+                flex: 1;
+                min-width: 100px;
+            }
+
+            .game-btn {
+                min-width: 140px;
+            }
+        }
+
+        /* ========================================
+           START SKJERM
+           ======================================== */
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--road-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            z-index: 10;
+        }
+
+        .start-screen.hidden {
+            display: none;
+        }
+
+        .start-car {
+            font-size: 4rem;
+            animation: carBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes carBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .start-text {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: var(--cyan);
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .start-hint {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flytende pixler -->
+    <div class="floating-pixels">
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="logo">jonasarnesen.org</a>
+        <a href="index.html" class="back-link">TILBAKE</a>
+    </header>
+
+    <!-- Hovedinnhold -->
+    <main>
+        <h1 class="game-title">NEON RACER</h1>
+
+        <div class="game-container">
+            <!-- Spillbrett -->
+            <div class="game-board-wrapper">
+                <canvas id="gameCanvas" width="300" height="500"></canvas>
+                <div class="start-screen" id="startScreen">
+                    <div class="start-car">🚗</div>
+                    <div class="start-text">TRYKK START</div>
+                    <div class="start-hint">
+                        Unngå trafikken!<br>
+                        Samle mynter for bonuspoeng
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidepanel -->
+            <div class="side-panel">
+                <div class="info-box">
+                    <div class="info-label">POENG</div>
+                    <div class="info-value" id="score">0</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">HASTIGHET</div>
+                    <div class="info-value speed" id="speed">1</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">DISTANSE</div>
+                    <div class="info-value" id="distance">0m</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">REKORD</div>
+                    <div class="info-value highscore" id="highscore">0</div>
+                </div>
+
+                <div class="controls-box">
+                    <div class="control-item">
+                        <span class="control-key">&#8592; &#8594;</span>
+                        <span class="control-action">Styr</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">&#8593;</span>
+                        <span class="control-action">Gass</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">&#8595;</span>
+                        <span class="control-action">Brems</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">P</span>
+                        <span class="control-action">Pause</span>
+                    </div>
+                </div>
+
+                <button class="game-btn" id="start-btn" onclick="startGame()">START</button>
+                <button class="game-btn pause" id="pause-btn" onclick="togglePause()" style="display: none;">PAUSE</button>
+            </div>
+        </div>
+
+        <!-- Mobile kontroller -->
+        <div class="mobile-controls" id="mobile-controls">
+            <div class="mobile-controls-row">
+                <button class="mobile-btn turbo" id="turboBtn">TURBO</button>
+            </div>
+            <div class="mobile-controls-row">
+                <button class="mobile-btn" id="leftBtn">&#8592;</button>
+                <button class="mobile-btn" id="rightBtn">&#8594;</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Game Over Overlay -->
+    <div class="game-over-overlay" id="game-over">
+        <h2 class="game-over-title">KRASJ!</h2>
+        <div class="final-score">
+            <div class="final-score-label">ENDELIG POENGSUM</div>
+            <div class="final-score-value" id="final-score">0</div>
+        </div>
+        <div class="new-highscore" id="new-highscore" style="display: none;">NY REKORD!</div>
+        <button class="game-btn" onclick="restartGame()">KJOR IGJEN</button>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p class="footer-text">&copy; 2026 Jonas <span>_</span></p>
+    </footer>
+
+    <script>
+        // ========================================
+        // NEON RACER - SPILLOGIKK
+        // ========================================
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Spillkonstanter
+        const CANVAS_WIDTH = canvas.width;
+        const CANVAS_HEIGHT = canvas.height;
+        const LANE_COUNT = 3;
+        const LANE_WIDTH = CANVAS_WIDTH / LANE_COUNT;
+        const CAR_WIDTH = 40;
+        const CAR_HEIGHT = 70;
+        const OBSTACLE_WIDTH = 40;
+        const OBSTACLE_HEIGHT = 70;
+        const COIN_SIZE = 20;
+
+        // Farger (matcher CSS-variabler)
+        const COLORS = {
+            road: '#1a1a2e',
+            roadLine: '#3a3a5e',
+            roadLineCenter: '#5a5a7e',
+            player: '#00FFFF',
+            playerAccent: '#FF00FF',
+            obstacle1: '#FF0044',
+            obstacle2: '#FF8800',
+            obstacle3: '#FFFF00',
+            coin: '#FFFF00',
+            coinGlow: 'rgba(255, 255, 0, 0.3)'
+        };
+
+        // Spilltilstand
+        let player = {
+            x: CANVAS_WIDTH / 2 - CAR_WIDTH / 2,
+            y: CANVAS_HEIGHT - CAR_HEIGHT - 30,
+            lane: 1,
+            targetX: CANVAS_WIDTH / 2 - CAR_WIDTH / 2,
+            speed: 0
+        };
+
+        let obstacles = [];
+        let coins = [];
+        let roadLines = [];
+        let score = 0;
+        let distance = 0;
+        let gameSpeed = 3;
+        let baseSpeed = 3;
+        let speedLevel = 1;
+        let isPlaying = false;
+        let isPaused = false;
+        let isGameOver = false;
+        let animationId = null;
+        let lastTime = 0;
+        let obstacleTimer = 0;
+        let coinTimer = 0;
+        let highScore = parseInt(localStorage.getItem('neonRacerHighScore')) || 0;
+
+        // Input-tilstand
+        let keys = {
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
+
+        // DOM-elementer
+        const scoreElement = document.getElementById('score');
+        const speedElement = document.getElementById('speed');
+        const distanceElement = document.getElementById('distance');
+        const highscoreElement = document.getElementById('highscore');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverOverlay = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+        const newHighscoreElement = document.getElementById('new-highscore');
+        const mobileControls = document.getElementById('mobile-controls');
+
+        // Initialiser highscore-visning
+        highscoreElement.textContent = highScore;
+
+        // ========================================
+        // VEILINJER
+        // ========================================
+        function initRoadLines() {
+            roadLines = [];
+            const lineHeight = 40;
+            const lineGap = 30;
+            const totalHeight = lineHeight + lineGap;
+
+            for (let y = -totalHeight; y < CANVAS_HEIGHT + totalHeight; y += totalHeight) {
+                roadLines.push({ y: y });
+            }
+        }
+
+        function updateRoadLines(deltaTime) {
+            const speed = gameSpeed * 60 * deltaTime;
+
+            roadLines.forEach(line => {
+                line.y += speed;
+                if (line.y > CANVAS_HEIGHT) {
+                    line.y -= (roadLines.length * 70);
+                }
+            });
+        }
+
+        function drawRoad() {
+            // Bakgrunn
+            ctx.fillStyle = COLORS.road;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Kantlinjer
+            ctx.strokeStyle = COLORS.roadLineCenter;
+            ctx.lineWidth = 4;
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(2, 0);
+            ctx.lineTo(2, CANVAS_HEIGHT);
+            ctx.moveTo(CANVAS_WIDTH - 2, 0);
+            ctx.lineTo(CANVAS_WIDTH - 2, CANVAS_HEIGHT);
+            ctx.stroke();
+
+            // Midtlinjer (stiplet)
+            ctx.strokeStyle = COLORS.roadLine;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([40, 30]);
+
+            roadLines.forEach(line => {
+                // Venstre linje
+                ctx.beginPath();
+                ctx.moveTo(LANE_WIDTH, line.y);
+                ctx.lineTo(LANE_WIDTH, line.y + 40);
+                ctx.stroke();
+
+                // Hoyre linje
+                ctx.beginPath();
+                ctx.moveTo(LANE_WIDTH * 2, line.y);
+                ctx.lineTo(LANE_WIDTH * 2, line.y + 40);
+                ctx.stroke();
+            });
+
+            ctx.setLineDash([]);
+        }
+
+        // ========================================
+        // SPILLERBIL
+        // ========================================
+        function drawPlayer() {
+            const x = player.x;
+            const y = player.y;
+
+            // Neon-glod
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = COLORS.player;
+
+            // Bilkropp
+            ctx.fillStyle = COLORS.player;
+            ctx.beginPath();
+            ctx.roundRect(x + 5, y + 10, CAR_WIDTH - 10, CAR_HEIGHT - 20, 5);
+            ctx.fill();
+
+            // Frontrute
+            ctx.fillStyle = '#0a0a1f';
+            ctx.fillRect(x + 10, y + 15, CAR_WIDTH - 20, 15);
+
+            // Bakrute
+            ctx.fillRect(x + 10, y + CAR_HEIGHT - 30, CAR_WIDTH - 20, 10);
+
+            // Hjul
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x, y + 12, 8, 18);
+            ctx.fillRect(x + CAR_WIDTH - 8, y + 12, 8, 18);
+            ctx.fillRect(x, y + CAR_HEIGHT - 30, 8, 18);
+            ctx.fillRect(x + CAR_WIDTH - 8, y + CAR_HEIGHT - 30, 8, 18);
+
+            // Magenta aksenter
+            ctx.fillStyle = COLORS.playerAccent;
+            ctx.fillRect(x + 8, y + 5, CAR_WIDTH - 16, 3);
+            ctx.fillRect(x + 12, y + CAR_HEIGHT - 8, 6, 5);
+            ctx.fillRect(x + CAR_WIDTH - 18, y + CAR_HEIGHT - 8, 6, 5);
+
+            // Frontlys
+            ctx.fillStyle = '#FFFFFF';
+            ctx.shadowColor = '#FFFFFF';
+            ctx.fillRect(x + 10, y + 3, 5, 3);
+            ctx.fillRect(x + CAR_WIDTH - 15, y + 3, 5, 3);
+
+            ctx.shadowBlur = 0;
+        }
+
+        function updatePlayer(deltaTime) {
+            // Sideveis bevegelse
+            const moveSpeed = 200 * deltaTime;
+
+            if (keys.left && player.x > 10) {
+                player.x -= moveSpeed;
+            }
+            if (keys.right && player.x < CANVAS_WIDTH - CAR_WIDTH - 10) {
+                player.x += moveSpeed;
+            }
+
+            // Hastighetsboost
+            if (keys.up) {
+                gameSpeed = baseSpeed * 1.5;
+            } else if (keys.down) {
+                gameSpeed = Math.max(baseSpeed * 0.5, 2);
+            } else {
+                gameSpeed = baseSpeed;
+            }
+        }
+
+        // ========================================
+        // HINDRINGER
+        // ========================================
+        function spawnObstacle() {
+            const lane = Math.floor(Math.random() * LANE_COUNT);
+            const colorIndex = Math.floor(Math.random() * 3);
+            const colors = [COLORS.obstacle1, COLORS.obstacle2, COLORS.obstacle3];
+
+            obstacles.push({
+                x: lane * LANE_WIDTH + (LANE_WIDTH - OBSTACLE_WIDTH) / 2,
+                y: -OBSTACLE_HEIGHT,
+                color: colors[colorIndex],
+                lane: lane
+            });
+        }
+
+        function drawObstacle(obs) {
+            const x = obs.x;
+            const y = obs.y;
+
+            // Glod
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = obs.color;
+
+            // Bilkropp
+            ctx.fillStyle = obs.color;
+            ctx.beginPath();
+            ctx.roundRect(x + 5, y + 10, OBSTACLE_WIDTH - 10, OBSTACLE_HEIGHT - 20, 5);
+            ctx.fill();
+
+            // Frontrute
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(x + 10, y + OBSTACLE_HEIGHT - 30, OBSTACLE_WIDTH - 20, 12);
+
+            // Bakrute
+            ctx.fillRect(x + 10, y + 18, OBSTACLE_WIDTH - 20, 10);
+
+            // Hjul
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x, y + 15, 7, 15);
+            ctx.fillRect(x + OBSTACLE_WIDTH - 7, y + 15, 7, 15);
+            ctx.fillRect(x, y + OBSTACLE_HEIGHT - 30, 7, 15);
+            ctx.fillRect(x + OBSTACLE_WIDTH - 7, y + OBSTACLE_HEIGHT - 30, 7, 15);
+
+            // Baklys
+            ctx.fillStyle = '#FF0000';
+            ctx.shadowColor = '#FF0000';
+            ctx.fillRect(x + 10, y + OBSTACLE_HEIGHT - 8, 5, 4);
+            ctx.fillRect(x + OBSTACLE_WIDTH - 15, y + OBSTACLE_HEIGHT - 8, 5, 4);
+
+            ctx.shadowBlur = 0;
+        }
+
+        function updateObstacles(deltaTime) {
+            const speed = gameSpeed * 60 * deltaTime;
+
+            obstacles.forEach((obs, index) => {
+                obs.y += speed;
+
+                // Fjern hvis utenfor skjermen
+                if (obs.y > CANVAS_HEIGHT) {
+                    obstacles.splice(index, 1);
+                    score += 10;
+                }
+            });
+        }
+
+        // ========================================
+        // MYNTER
+        // ========================================
+        function spawnCoin() {
+            const lane = Math.floor(Math.random() * LANE_COUNT);
+
+            // Sjekk at det ikke er en hindring i samme lane nærme
+            const hasNearbyObstacle = obstacles.some(obs =>
+                obs.lane === lane && obs.y < 100
+            );
+
+            if (!hasNearbyObstacle) {
+                coins.push({
+                    x: lane * LANE_WIDTH + LANE_WIDTH / 2,
+                    y: -COIN_SIZE,
+                    rotation: 0
+                });
+            }
+        }
+
+        function drawCoin(coin) {
+            ctx.save();
+            ctx.translate(coin.x, coin.y);
+            ctx.rotate(coin.rotation);
+
+            // Glod
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = COLORS.coin;
+
+            // Ytre sirkel
+            ctx.fillStyle = COLORS.coin;
+            ctx.beginPath();
+            ctx.arc(0, 0, COIN_SIZE / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Indre sirkel
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(0, 0, COIN_SIZE / 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Krone-symbol
+            ctx.fillStyle = '#B8860B';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', 0, 1);
+
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        function updateCoins(deltaTime) {
+            const speed = gameSpeed * 60 * deltaTime;
+
+            coins.forEach((coin, index) => {
+                coin.y += speed;
+                coin.rotation += 5 * deltaTime;
+
+                // Fjern hvis utenfor skjermen
+                if (coin.y > CANVAS_HEIGHT + COIN_SIZE) {
+                    coins.splice(index, 1);
+                }
+            });
+        }
+
+        // ========================================
+        // KOLLISJON
+        // ========================================
+        function checkCollision() {
+            // Sjekk kollisjon med hindringer
+            for (let obs of obstacles) {
+                if (
+                    player.x < obs.x + OBSTACLE_WIDTH - 10 &&
+                    player.x + CAR_WIDTH > obs.x + 10 &&
+                    player.y < obs.y + OBSTACLE_HEIGHT - 10 &&
+                    player.y + CAR_HEIGHT > obs.y + 10
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkCoinCollection() {
+            coins.forEach((coin, index) => {
+                const dx = (player.x + CAR_WIDTH / 2) - coin.x;
+                const dy = (player.y + CAR_HEIGHT / 2) - coin.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < CAR_WIDTH / 2 + COIN_SIZE / 2) {
+                    coins.splice(index, 1);
+                    score += 50;
+                    // Liten visuell effekt (oppdater score umiddelbart)
+                    updateUI();
+                }
+            });
+        }
+
+        // ========================================
+        // SPILLSTYRING
+        // ========================================
+        function updateUI() {
+            scoreElement.textContent = score;
+            speedElement.textContent = speedLevel;
+            distanceElement.textContent = Math.floor(distance) + 'm';
+        }
+
+        function increaseDifficulty() {
+            // Ok hastighet basert på distanse
+            const newLevel = Math.floor(distance / 500) + 1;
+            if (newLevel > speedLevel && newLevel <= 10) {
+                speedLevel = newLevel;
+                baseSpeed = 3 + (speedLevel - 1) * 0.5;
+            }
+        }
+
+        function gameLoop(currentTime) {
+            if (!isPlaying || isPaused) {
+                animationId = requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+
+            // Oppdater distanse
+            distance += gameSpeed * deltaTime * 10;
+
+            // Oppdater vanskelighetsg
+            increaseDifficulty();
+
+            // Spawn hindringer
+            obstacleTimer += deltaTime;
+            const spawnRate = Math.max(0.8, 1.5 - speedLevel * 0.08);
+            if (obstacleTimer > spawnRate) {
+                spawnObstacle();
+                obstacleTimer = 0;
+            }
+
+            // Spawn mynter
+            coinTimer += deltaTime;
+            if (coinTimer > 2) {
+                if (Math.random() < 0.4) {
+                    spawnCoin();
+                }
+                coinTimer = 0;
+            }
+
+            // Oppdater spillelementer
+            updatePlayer(deltaTime);
+            updateRoadLines(deltaTime);
+            updateObstacles(deltaTime);
+            updateCoins(deltaTime);
+
+            // Sjekk kollisjon
+            if (checkCollision()) {
+                gameOver();
+                return;
+            }
+
+            // Sjekk myntsamling
+            checkCoinCollection();
+
+            // Tegn alt
+            drawRoad();
+            coins.forEach(drawCoin);
+            obstacles.forEach(drawObstacle);
+            drawPlayer();
+
+            // Oppdater UI
+            updateUI();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            // Reset spilltilstand
+            player.x = CANVAS_WIDTH / 2 - CAR_WIDTH / 2;
+            player.y = CANVAS_HEIGHT - CAR_HEIGHT - 30;
+            obstacles = [];
+            coins = [];
+            score = 0;
+            distance = 0;
+            gameSpeed = 3;
+            baseSpeed = 3;
+            speedLevel = 1;
+            obstacleTimer = 0;
+            coinTimer = 0;
+            isPlaying = true;
+            isPaused = false;
+            isGameOver = false;
+
+            initRoadLines();
+            updateUI();
+
+            // Oppdater UI-knapper
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'block';
+            startScreen.classList.add('hidden');
+            gameOverOverlay.classList.remove('visible');
+
+            // Vis mobile kontroller pa mobil
+            if (window.innerWidth <= 768) {
+                mobileControls.style.display = 'flex';
+            }
+
+            lastTime = performance.now();
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function togglePause() {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? 'FORTSETT' : 'PAUSE';
+
+            if (!isPaused) {
+                lastTime = performance.now();
+            }
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            isGameOver = true;
+
+            // Sjekk highscore
+            const isNewHighscore = score > highScore;
+            if (isNewHighscore) {
+                highScore = score;
+                localStorage.setItem('neonRacerHighScore', highScore);
+                highscoreElement.textContent = highScore;
+            }
+
+            // Vis game over-skjerm
+            finalScoreElement.textContent = score;
+            newHighscoreElement.style.display = isNewHighscore ? 'block' : 'none';
+            gameOverOverlay.classList.add('visible');
+
+            startBtn.style.display = 'block';
+            startBtn.textContent = 'KJOR IGJEN';
+            pauseBtn.style.display = 'none';
+        }
+
+        function restartGame() {
+            gameOverOverlay.classList.remove('visible');
+            startGame();
+        }
+
+        // ========================================
+        // TASTATURKONTROLLER
+        // ========================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                keys.left = true;
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                keys.right = true;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                keys.up = true;
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                keys.down = true;
+            } else if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                if (isPlaying) togglePause();
+            } else if (e.key === ' ' && !isPlaying && !isGameOver) {
+                e.preventDefault();
+                startGame();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') keys.left = false;
+            if (e.key === 'ArrowRight') keys.right = false;
+            if (e.key === 'ArrowUp') keys.up = false;
+            if (e.key === 'ArrowDown') keys.down = false;
+        });
+
+        // ========================================
+        // MOBILKONTROLLER
+        // ========================================
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const turboBtn = document.getElementById('turboBtn');
+
+        // Touch-events for venstre knapp
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys.left = true;
+        });
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.left = false;
+        });
+        leftBtn.addEventListener('mousedown', () => keys.left = true);
+        leftBtn.addEventListener('mouseup', () => keys.left = false);
+        leftBtn.addEventListener('mouseleave', () => keys.left = false);
+
+        // Touch-events for hoyre knapp
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys.right = true;
+        });
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.right = false;
+        });
+        rightBtn.addEventListener('mousedown', () => keys.right = true);
+        rightBtn.addEventListener('mouseup', () => keys.right = false);
+        rightBtn.addEventListener('mouseleave', () => keys.right = false);
+
+        // Touch-events for turbo knapp
+        turboBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys.up = true;
+        });
+        turboBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.up = false;
+        });
+        turboBtn.addEventListener('mousedown', () => keys.up = true);
+        turboBtn.addEventListener('mouseup', () => keys.up = false);
+        turboBtn.addEventListener('mouseleave', () => keys.up = false);
+
+        // ========================================
+        // INITIALISER
+        // ========================================
+        function init() {
+            initRoadLines();
+
+            // Tegn startskjerm-bakgrunn
+            drawRoad();
+
+            // Sjekk for lagret highscore
+            highscoreElement.textContent = highScore;
+        }
+
+        // Polyfill for roundRect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                if (width < 2 * radius) radius = width / 2;
+                if (height < 2 * radius) radius = height / 2;
+                this.moveTo(x + radius, y);
+                this.arcTo(x + width, y, x + width, y + height, radius);
+                this.arcTo(x + width, y + height, x, y + height, radius);
+                this.arcTo(x, y + height, x, y, radius);
+                this.arcTo(x, y, x + width, y, radius);
+                this.closePath();
+                return this;
+            };
+        }
+
+        init();
+    </script>
+</body>
+</html>
