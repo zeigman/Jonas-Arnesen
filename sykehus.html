@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sykehus Quiz - Intensivsykepleie</title>
+    <style>
+        /* ============================================
+           GLOBAL STYLING - Retro pixel art estetikk
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a2e;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            color: #e8d5b7;
+        }
+
+        h1 {
+            color: #f4a460;
+            text-shadow: 2px 2px 0 #8b4513;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        /* ============================================
+           SPILLCONTAINER OG CANVAS
+           ============================================ */
+        #game-container {
+            position: relative;
+            border: 4px solid #8b4513;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(244, 164, 96, 0.3);
+            background: #2d2d44;
+        }
+
+        #gameCanvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        /* ============================================
+           HUD - Heads Up Display
+           ============================================ */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(45, 45, 68, 0.9);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 2px solid #f4a460;
+            font-size: 12px;
+        }
+
+        #hud p {
+            margin: 2px 0;
+        }
+
+        /* ============================================
+           INTERAKSJONSINDIKATOR
+           ============================================ */
+        #interaction-hint {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(45, 45, 68, 0.95);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #90ee90;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+
+        /* ============================================
+           MOBILE KONTROLLER
+           ============================================ */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 2px;
+        }
+
+        .dpad-btn {
+            background: rgba(244, 164, 96, 0.8);
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .dpad-btn:active {
+            background: #f4a460;
+            transform: scale(0.95);
+        }
+
+        .dpad-btn.empty {
+            background: transparent;
+            border: none;
+        }
+
+        #action-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(144, 238, 144, 0.8);
+            border: 3px solid #228b22;
+            border-radius: 50%;
+            color: #1a1a2e;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #action-btn:active {
+            background: #90ee90;
+            transform: scale(0.95);
+        }
+
+        /* ============================================
+           MODAL/DIALOG STYLING
+           ============================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%);
+            border: 4px solid #f4a460;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(244, 164, 96, 0.5);
+        }
+
+        .modal-title {
+            color: #f4a460;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            text-shadow: 2px 2px 0 #8b4513;
+        }
+
+        /* ============================================
+           AVDELINGSVALG
+           ============================================ */
+        .department-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .department-info h3 {
+            color: #90ee90;
+            margin-bottom: 10px;
+        }
+
+        .department-info p {
+            color: #b8b8b8;
+            font-size: 0.9rem;
+        }
+
+        .quiz-choice {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .quiz-btn {
+            background: linear-gradient(135deg, #4a4a6a 0%, #3a3a5a 100%);
+            border: 3px solid #f4a460;
+            border-radius: 8px;
+            padding: 15px 20px;
+            color: #e8d5b7;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .quiz-btn:hover {
+            background: linear-gradient(135deg, #5a5a7a 0%, #4a4a6a 100%);
+            border-color: #90ee90;
+            transform: translateX(5px);
+        }
+
+        .quiz-btn .quiz-name {
+            font-weight: bold;
+            color: #f4a460;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .quiz-btn .quiz-desc {
+            font-size: 0.85rem;
+            color: #b8b8b8;
+        }
+
+        .quiz-btn .quiz-progress {
+            font-size: 0.8rem;
+            color: #90ee90;
+            margin-top: 5px;
+        }
+
+        /* ============================================
+           QUIZ SPØRSMÅL
+           ============================================ */
+        .question-container {
+            margin-bottom: 20px;
+        }
+
+        .question-progress {
+            text-align: center;
+            color: #b8b8b8;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .question-text {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            font-size: 1rem;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%);
+            border: 2px solid #6a6a8a;
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #e8d5b7;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #f4a460;
+            background: linear-gradient(135deg, #4a4a6a 0%, #3a3a5a 100%);
+        }
+
+        .option-btn.correct {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            border-color: #90ee90;
+        }
+
+        .option-btn.incorrect {
+            background: linear-gradient(135deg, #c62828 0%, #8b0000 100%);
+            border-color: #ff6b6b;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        /* ============================================
+           FORKLARING OG RESULTAT
+           ============================================ */
+        .explanation {
+            background: rgba(144, 238, 144, 0.1);
+            border: 2px solid #90ee90;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .explanation h4 {
+            color: #90ee90;
+            margin-bottom: 10px;
+        }
+
+        .next-btn, .close-btn, .back-btn {
+            background: linear-gradient(135deg, #f4a460 0%, #cd853f 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 25px;
+            color: #1a1a2e;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.2s;
+        }
+
+        .next-btn:hover, .close-btn:hover, .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(244, 164, 96, 0.5);
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #6a6a8a 0%, #4a4a6a 100%);
+            color: #e8d5b7;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ============================================
+           RESULTATSKJERM
+           ============================================ */
+        .result-container {
+            text-align: center;
+        }
+
+        .result-score {
+            font-size: 3rem;
+            color: #f4a460;
+            margin: 20px 0;
+            text-shadow: 2px 2px 0 #8b4513;
+        }
+
+        .result-message {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .result-stars {
+            font-size: 2rem;
+            margin: 15px 0;
+        }
+
+        /* ============================================
+           MINIMAP
+           ============================================ */
+        #minimap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(45, 45, 68, 0.9);
+            padding: 5px;
+            border-radius: 4px;
+            border: 2px solid #f4a460;
+        }
+
+        #minimapCanvas {
+            image-rendering: pixelated;
+        }
+
+        /* ============================================
+           INSTRUKSJONER
+           ============================================ */
+        #instructions {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #b8b8b8;
+            max-width: 600px;
+        }
+
+        #instructions span {
+            color: #f4a460;
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+           ============================================ */
+        @media (max-width: 700px) {
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            #mobile-controls {
+                display: flex;
+            }
+
+            #instructions {
+                display: none;
+            }
+
+            .modal-content {
+                padding: 15px;
+            }
+
+            .option-btn {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-height: 700px) and (orientation: landscape) {
+            h1 {
+                margin-bottom: 5px;
+                font-size: 1rem;
+            }
+
+            body {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Sykehus Quiz</h1>
+    <p style="margin-bottom: 10px; color: #b8b8b8; text-align: center;">Intensivsykepleie - MINA200 & MISY200</p>
+
+    <!-- Hovedspillcontainer -->
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD med spillerinfo -->
+        <div id="hud">
+            <p>Quizer fullfort: <span id="completed-count">0</span>/20</p>
+            <p>Avdeling: <span id="current-area">Korridor</span></p>
+        </div>
+
+        <!-- Minimap -->
+        <div id="minimap">
+            <canvas id="minimapCanvas" width="120" height="80"></canvas>
+        </div>
+
+        <!-- Interaksjonsindikator -->
+        <div id="interaction-hint">
+            Trykk <strong>SPACE</strong> for a ga inn
+        </div>
+
+        <!-- Mobile kontroller -->
+        <div id="mobile-controls">
+            <div class="dpad">
+                <div class="dpad-btn empty"></div>
+                <button class="dpad-btn" data-dir="up">&#9650;</button>
+                <div class="dpad-btn empty"></div>
+                <button class="dpad-btn" data-dir="left">&#9664;</button>
+                <div class="dpad-btn empty"></div>
+                <button class="dpad-btn" data-dir="right">&#9654;</button>
+                <div class="dpad-btn empty"></div>
+                <button class="dpad-btn" data-dir="down">&#9660;</button>
+                <div class="dpad-btn empty"></div>
+            </div>
+            <button id="action-btn">ENTER</button>
+        </div>
+    </div>
+
+    <!-- Instruksjoner for desktop -->
+    <div id="instructions">
+        <span>WASD</span> eller <span>Piltaster</span> for a bevege seg |
+        <span>SPACE</span> eller <span>ENTER</span> for a ga inn i avdeling
+    </div>
+
+    <!-- Modal for avdelingsvalg -->
+    <div id="department-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="dept-title">Avdeling</h2>
+            <div class="department-info" id="dept-info">
+                <h3 id="dept-name">Navn</h3>
+                <p id="dept-topics">Temaer</p>
+            </div>
+            <div class="quiz-choice" id="quiz-choice">
+                <!-- Quiz-knapper genereres dynamisk -->
+            </div>
+            <div class="btn-row">
+                <button class="back-btn" onclick="closeDepartmentModal()">Tilbake</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for quiz -->
+    <div id="quiz-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="quiz-title">Quiz</h2>
+            <div id="quiz-content">
+                <!-- Quiz-innhold genereres dynamisk -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================
+    // QUIZ DATA - Lett a utvide med flere sporsmal
+    // ============================================
+    // Struktur: quizData[avdelingsId][fagkode] = { name, questions[] }
+    // Hvert sporsmal har: question, options[], correct (indeks), explanation
+
+    const quizData = {
+        // ----------------------------------------
+        // 1. INTENSIVAVDELING (ICU)
+        // ----------------------------------------
+        "intensiv": {
+            "MINA200": {
+                name: "Patofysiologi - Intensiv",
+                questions: [
+                    {
+                        question: "Hva er hovedarsaken til hypoksemi ved ARDS?",
+                        options: [
+                            "Redusert hemoglobinniva",
+                            "Intrapulmonal shunting",
+                            "Hyperventilasjon",
+                            "Okt oksygenforbruk"
+                        ],
+                        correct: 1,
+                        explanation: "Ved ARDS fylles alveolene med vaske/inflammatorisk materiale, noe som forer til at blod passerer gjennom lungeomrader uten a bli oksygenert (intrapulmonal shunting). Dette er hovedarsaken til den ofte behandlingsresistente hypoksemien."
+                    },
+                    {
+                        question: "Hvilken parameter er mest sensitiv for tidlig sepsis?",
+                        options: [
+                            "Blodtrykk",
+                            "Laktat",
+                            "Kroppstemperatur",
+                            "Hvite blodceller"
+                        ],
+                        correct: 1,
+                        explanation: "Laktat er en sensitiv markur for vevshypoperfusjon og anaerob metabolisme. Forhoyede laktatverdier kan pavisjes for blodtrykksfall og andre kliniske tegn pa sepsis."
+                    },
+                    {
+                        question: "Hva er hovedindikasjonen for VV-ECMO?",
+                        options: [
+                            "Kardiogent sjokk",
+                            "Refraktaer hypoksemi",
+                            "Leversvikt",
+                            "Nyresvikt"
+                        ],
+                        correct: 1,
+                        explanation: "VV-ECMO (veno-venus) brukes primeart ved refraktaer hypoksemi, for eksempel ved alvorlig ARDS, der konvensjonell respiratorbehandling ikke gir tilstrekkelig oksygenering."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Intensiv",
+                questions: [
+                    {
+                        question: "Hva er forsteprioritet ved mottak av en septisk pasient?",
+                        options: [
+                            "Ta blodprover",
+                            "Sikre luftveier og gi oksygen",
+                            "Legge inn urinkateter",
+                            "Bestille rontgen thorax"
+                        ],
+                        correct: 1,
+                        explanation: "ABC-prinsippet gjelder alltid. Sikring av luftveier og adekvat oksygenering er forsteprioritet for a forebygge ytterligere organsvikt."
+                    },
+                    {
+                        question: "Hvilken PiCCO-parameter indikerer preload?",
+                        options: [
+                            "SVR (systemisk vaskulaer resistans)",
+                            "GEDI (global end-diastolisk indeks)",
+                            "CI (cardiac index)",
+                            "dPmax"
+                        ],
+                        correct: 1,
+                        explanation: "GEDI (Global End-Diastolic Index) er en volumetrisk parameter som gir informasjon om hjertets fylningsgrad (preload) og er mer palitelig enn trykkbaserte mal."
+                    },
+                    {
+                        question: "Hva er anbefalt leie for ARDS-pasienter?",
+                        options: [
+                            "Flatt ryggleie",
+                            "Mageleie (pronleie)",
+                            "Trendelenburg",
+                            "Sittende stilling"
+                        ],
+                        correct: 1,
+                        explanation: "Mageleie (pronleie) bedrer ventilasjon-perfusjon-forholdet ved a rekruttere dorsale lungeavsnitt og anbefales ved moderat til alvorlig ARDS."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 2. AKUTTMOTTAK
+        // ----------------------------------------
+        "akutt": {
+            "MINA200": {
+                name: "Patofysiologi - Akutt",
+                questions: [
+                    {
+                        question: "Hva er den dodelige triaden ved traume?",
+                        options: [
+                            "Hypotermi, acidose, koagulopati",
+                            "Hypertensjon, takykardi, feber",
+                            "Bradykardi, hypotensjon, hypoksi",
+                            "Anemi, dehydrering, infeksjon"
+                        ],
+                        correct: 0,
+                        explanation: "Den dodelige triaden (lethal triad) bestar av hypotermi, acidose og koagulopati. Disse tilstandene forsterker hverandre og oker mortaliteten betydelig ved traume."
+                    },
+                    {
+                        question: "Ved hvilken kjernetemperatur regnes pasienten som alvorlig hypoterm?",
+                        options: [
+                            "Under 36°C",
+                            "Under 35°C",
+                            "Under 32°C",
+                            "Under 28°C"
+                        ],
+                        correct: 2,
+                        explanation: "Alvorlig hypotermi defineres som kjernetemperatur under 32°C. Ved denne temperaturen er det betydelig risiko for arytmier og nedsatt organfunksjon."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Akutt",
+                questions: [
+                    {
+                        question: "Hva er forste tiltak ved mottak av multitraumepasient?",
+                        options: [
+                            "Detaljert anamnese",
+                            "Primaerundersokelse (ABCDE)",
+                            "CT-undersokelse",
+                            "Blodprover"
+                        ],
+                        correct: 1,
+                        explanation: "Primaerundersokelsen (ABCDE) er alltid forste tiltak for a identifisere og behandle livstruende tilstander i prioritert rekkefolge."
+                    },
+                    {
+                        question: "Hvilken oppvarmingsmetode er mest effektiv ved alvorlig hypotermi?",
+                        options: [
+                            "Varme tepper",
+                            "Varmluftsaggregat",
+                            "Invasiv oppvarming (ECMO/bypass)",
+                            "Varm drikke"
+                        ],
+                        correct: 2,
+                        explanation: "Ved alvorlig hypotermi med sirkulasjonssvikt er invasiv oppvarming via ECMO eller hjerte-lungemaskin mest effektivt og kan ga fra hjertestans til full restitusjon."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 3. HJERTEAVDELING
+        // ----------------------------------------
+        "hjerte": {
+            "MINA200": {
+                name: "Patofysiologi - Hjerte",
+                questions: [
+                    {
+                        question: "Hva er hovedmekanismen ved kardiogent sjokk?",
+                        options: [
+                            "Vasodilatasjon",
+                            "Sviktende pumpefunksjon",
+                            "Hypovolemi",
+                            "Obstruksjon av blodstrom"
+                        ],
+                        correct: 1,
+                        explanation: "Kardiogent sjokk skyldes primaert sviktende pumpefunksjon i hjertet, ofte etter stort hjerteinfarkt, som gir utilstrekkelig cardiac output til a dekke kroppens behov."
+                    },
+                    {
+                        question: "Hva karakteriserer DIC (disseminert intravaskulaer koagulasjon)?",
+                        options: [
+                            "Kun blodningstendens",
+                            "Kun trombosetendens",
+                            "Bade blodning og trombose samtidig",
+                            "Normal koagulasjon"
+                        ],
+                        correct: 2,
+                        explanation: "DIC karakteriseres av ukontrollert aktivering av koagulasjonssystemet med bade mikrotrombosedannelse og blodningstendens pa grunn av forbruk av koagulasjonsfaktorer."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Hjerte",
+                questions: [
+                    {
+                        question: "Nar er IABP (intraaortal ballongpumpe) kontraindisert?",
+                        options: [
+                            "Ved hjerteinfarkt",
+                            "Ved aortainsuffisiens",
+                            "Ved kardiogent sjokk",
+                            "Etter hjertekirurgi"
+                        ],
+                        correct: 1,
+                        explanation: "IABP er kontraindisert ved aortainsuffisiens fordi ballongen vil forverre regurgitasjonen ved a oke det diastoliske trykket i aorta."
+                    },
+                    {
+                        question: "Hva er viktigste sykepleieobservasjon ved Impella?",
+                        options: [
+                            "Respirasjonsfrekvens",
+                            "Plassering og hemolyseparametre",
+                            "Appetitt",
+                            "Sovnkvalitet"
+                        ],
+                        correct: 1,
+                        explanation: "Ved Impella er korrekt plassering og overvaking av hemolyseparametre (fritt hemoglobin, haptoglobin) kritisk for a oppdage komplikasjoner tidlig."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 4. LUNGEAVDELING
+        // ----------------------------------------
+        "lunge": {
+            "MINA200": {
+                name: "Patofysiologi - Lunge",
+                questions: [
+                    {
+                        question: "Hva er Berlin-kriteriene for ARDS basert pa?",
+                        options: [
+                            "Blodtrykk og puls",
+                            "PaO2/FiO2-ratio og lungeroentgen",
+                            "Temperatur og CRP",
+                            "Laktat og pH"
+                        ],
+                        correct: 1,
+                        explanation: "Berlin-kriteriene klassifiserer ARDS etter PaO2/FiO2-ratio (mild >200, moderat >100, alvorlig <100) sammen med bilaterale infiltrater pa rontgen og fravær av kardiogent lungeødem."
+                    },
+                    {
+                        question: "Hva er driving pressure ved mekanisk ventilasjon?",
+                        options: [
+                            "Totalt inspiratorisk trykk",
+                            "Platåtrykk minus PEEP",
+                            "Bare PEEP",
+                            "Maksimalt luftveistykk"
+                        ],
+                        correct: 1,
+                        explanation: "Driving pressure = Platåtrykk - PEEP. Dette representerer det faktiske trykket som strekker lungene og bor holdes under 15 cmH2O for a unnga VILI."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Lunge",
+                questions: [
+                    {
+                        question: "Hva er mal for tidalvolum ved lungeprotektiv ventilasjon?",
+                        options: [
+                            "10-12 ml/kg ideell kroppsvekt",
+                            "6-8 ml/kg ideell kroppsvekt",
+                            "15 ml/kg faktisk kroppsvekt",
+                            "4 ml/kg faktisk kroppsvekt"
+                        ],
+                        correct: 1,
+                        explanation: "Lungeprotektiv ventilasjon anbefaler tidalvolum pa 6-8 ml/kg basert pa ideell kroppsvekt for a redusere risikoen for ventilatorindusert lungeskade."
+                    },
+                    {
+                        question: "Hva er viktigste sykepleietiltak for å forebygge VAP?",
+                        options: [
+                            "Daglig rontgen thorax",
+                            "Hevet hodegjaerde og munnstell",
+                            "Profylaktisk antibiotika",
+                            "Hyppig suging"
+                        ],
+                        correct: 1,
+                        explanation: "Hevet hodegjaerde (30-45°) og regelmessig munnstell med klorheksidin er dokumenterte tiltak for a forebygge ventilatorassosiert pneumoni (VAP)."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 5. NEVROLOGISK AVDELING
+        // ----------------------------------------
+        "nevro": {
+            "MINA200": {
+                name: "Patofysiologi - Nevrologi",
+                questions: [
+                    {
+                        question: "Hva er Monro-Kellie-doktrinen?",
+                        options: [
+                            "Blodtrykk = motstand x flow",
+                            "Intrakranielt volum er konstant",
+                            "Hjernen bruker kun glukose",
+                            "CPP = MAP - ICP"
+                        ],
+                        correct: 1,
+                        explanation: "Monro-Kellie-doktrinen sier at intrakranielt volum er konstant. Okning i ett kompartment (blod, CSF, hjernevev) ma kompenseres ved reduksjon i et annet, ellers stiger ICP."
+                    },
+                    {
+                        question: "Hvilke nevrotransmittere er involvert i delirium?",
+                        options: [
+                            "Kun serotonin",
+                            "Dopamin-acetylkolin-ubalanse",
+                            "Kun noradrenalin",
+                            "Kun GABA"
+                        ],
+                        correct: 1,
+                        explanation: "Delirium antas a skyldes en ubalanse mellom dopamin (for mye) og acetylkolin (for lite), samt pavirkning av andre nevrotransmittersystemer."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Nevrologi",
+                questions: [
+                    {
+                        question: "Hvilket verktoy anbefales for delirium-screening pa intensiv?",
+                        options: [
+                            "Glasgow Coma Scale",
+                            "CAM-ICU",
+                            "APACHE II",
+                            "NEWS"
+                        ],
+                        correct: 1,
+                        explanation: "CAM-ICU (Confusion Assessment Method for the ICU) er et validert verkty for a screene for delirium hos intensivpasienter, ogsaa de som er intubert."
+                    },
+                    {
+                        question: "Hva er malverdi for CPP (cerebralt perfusjonstrykk)?",
+                        options: [
+                            "40-50 mmHg",
+                            "60-70 mmHg",
+                            "80-90 mmHg",
+                            "100-110 mmHg"
+                        ],
+                        correct: 1,
+                        explanation: "CPP bor holdes mellom 60-70 mmHg for a sikre adekvat cerebral perfusjon. For lavt gir iskemi, for hoyt kan forverre odem."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 6. DIALYSEAVDELING
+        // ----------------------------------------
+        "dialyse": {
+            "MINA200": {
+                name: "Patofysiologi - Nyre",
+                questions: [
+                    {
+                        question: "Hva er KDIGO-kriteriene for akutt nyreskade basert pa?",
+                        options: [
+                            "Kun blodtrykk",
+                            "Kreatininstigning og/eller urinproduksjon",
+                            "Kun elektrolytter",
+                            "Kun ultralyd"
+                        ],
+                        correct: 1,
+                        explanation: "KDIGO-kriteriene klassifiserer AKI (akutt nyreskade) basert pa okning i kreatinin (>26 umol/L pa 48t eller >50% pa 7d) og/eller redusert urinproduksjon (<0.5 ml/kg/t i 6t)."
+                    },
+                    {
+                        question: "Hva er hovedarsaken til AKI hos intensivpasienter?",
+                        options: [
+                            "Nyrestein",
+                            "Sepsis og hypoperfusjon",
+                            "Genetiske faktorer",
+                            "Kosthold"
+                        ],
+                        correct: 1,
+                        explanation: "Sepsis og hypoperfusjon (prerenal AKI) er de vanligste arsakene til akutt nyreskade pa intensivavdeling, ofte som del av multiorgansvikt."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Dialyse",
+                questions: [
+                    {
+                        question: "Nar foretrekkes CRRT fremfor intermitterende dialyse?",
+                        options: [
+                            "Ved stabil pasient",
+                            "Ved hemodynamisk ustabil pasient",
+                            "Ved kun elektrolyttforstyrrelse",
+                            "Ved kronisk nyresvikt"
+                        ],
+                        correct: 1,
+                        explanation: "CRRT (kontinuerlig nyreerstattende behandling) gir saktere væske- og soluttfjerning, og er derfor bedre egnet for hemodynamisk ustabile intensivpasienter."
+                    },
+                    {
+                        question: "Hva er viktigste komplikasjon a overvake ved CRRT?",
+                        options: [
+                            "Hosteanfall",
+                            "Hypotermi og elektrolyttforstyrrelser",
+                            "Kvalme",
+                            "Hodepine"
+                        ],
+                        correct: 1,
+                        explanation: "Ved CRRT er hypotermi (pga ekstrakorperal sirkulasjon) og elektrolyttforstyrrelser (særlig kalium, fosfat, kalsium) viktige komplikasjoner som krever regelmessig overvaking."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 7. GASTRO/LEVER
+        // ----------------------------------------
+        "gastro": {
+            "MINA200": {
+                name: "Patofysiologi - Gastro/Lever",
+                questions: [
+                    {
+                        question: "Hva karakteriserer hepatorenalt syndrom?",
+                        options: [
+                            "Primaer nyresykdom",
+                            "Funksjonell nyresvikt ved leversvikt",
+                            "Infeksjon i nyrene",
+                            "Nyrestein"
+                        ],
+                        correct: 1,
+                        explanation: "Hepatorenalt syndrom er funksjonell nyresvikt som oppstar sekundært til alvorlig leversykdom, uten strukturell nyreskade. Skyldes renal vasokonstriksjon."
+                    },
+                    {
+                        question: "Hva er abdominal compartmentsyndrom definert som?",
+                        options: [
+                            "Magesmerter",
+                            "IAP >20 mmHg med nyoppstått organsvikt",
+                            "Forstoppelse",
+                            "Ascites"
+                        ],
+                        correct: 1,
+                        explanation: "Abdominal compartmentsyndrom defineres som intraabdominalt trykk (IAP) over 20 mmHg med nyoppstatt organsvikt. Krever ofte kirurgisk dekompresjon."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Gastro/Lever",
+                questions: [
+                    {
+                        question: "Nar bor enteral ernaering startes hos intensivpasienter?",
+                        options: [
+                            "Etter 1 uke",
+                            "Innen 24-48 timer",
+                            "Kun ved normalvekt",
+                            "Aldri ved sjokk"
+                        ],
+                        correct: 1,
+                        explanation: "Tidlig enteral ernaering (innen 24-48 timer) anbefales hos de fleste intensivpasienter for a opprettholde tarmfunksjon og redusere infeksjonsrisiko."
+                    },
+                    {
+                        question: "Hvordan males intraabdominalt trykk?",
+                        options: [
+                            "CT-undersokelse",
+                            "Via urinblæren (blæretrykk)",
+                            "Blodprove",
+                            "Ultralyd"
+                        ],
+                        correct: 1,
+                        explanation: "Intraabdominalt trykk males indirekte via blæretrykksmaaling. Urinblæren fylles med 25 ml saltvann og trykket males via urinkateteret."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 8. BARNEAVDELING
+        // ----------------------------------------
+        "barn": {
+            "MINA200": {
+                name: "Patofysiologi - Pediatri",
+                questions: [
+                    {
+                        question: "Hva er hovedforskjellen pa barns og voksnes luftveier?",
+                        options: [
+                            "Barn har storre luftveier",
+                            "Barn har mindre og mer ettergivende luftveier",
+                            "Ingen forskjell",
+                            "Barn har stivere luftveier"
+                        ],
+                        correct: 1,
+                        explanation: "Barn har mindre diameter pa luftveiene, og brusk og vev er mer ettergivende. Dette gjor dem mer utsatt for obstruksjon og kollaps."
+                    },
+                    {
+                        question: "Hva er normalt systolisk blodtrykk hos et 1 ar gammelt barn?",
+                        options: [
+                            "60-70 mmHg",
+                            "70-90 mmHg",
+                            "100-120 mmHg",
+                            "120-140 mmHg"
+                        ],
+                        correct: 1,
+                        explanation: "Normalt systolisk blodtrykk hos et 1-aring er cirka 70-90 mmHg. En tommelfingerregel er: 70 + (alder x 2) for nedre normalgrense."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Pediatri",
+                questions: [
+                    {
+                        question: "Hva er viktigste prinsipp for parorendeinvolvering pa barneintensiv?",
+                        options: [
+                            "Foreldre bor holdes borte",
+                            "Familiesentrert omsorg med aktiv foreldredeltakelse",
+                            "Kun informasjon ved utskrivelse",
+                            "Besok kun en time daglig"
+                        ],
+                        correct: 1,
+                        explanation: "Familiesentrert omsorg er grunnprinsippet i pediatrisk intensivbehandling. Foreldre er en ressurs og aktiv deltakelse fremmer barnets trygghet og bedring."
+                    },
+                    {
+                        question: "Hvordan beregnes væskebehov hos barn (Holliday-Segar)?",
+                        options: [
+                            "100 ml/kg uansett vekt",
+                            "100/50/20 ml/kg for forste 10/neste 10/over 20 kg",
+                            "50 ml/kg for alle",
+                            "Samme som voksne"
+                        ],
+                        correct: 1,
+                        explanation: "Holliday-Segar-formelen: 100 ml/kg for forste 10 kg, 50 ml/kg for neste 10 kg, og 20 ml/kg for vekt over 20 kg per dogn."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 9. FODEAVDELING
+        // ----------------------------------------
+        "fode": {
+            "MINA200": {
+                name: "Patofysiologi - Obstetrikk",
+                questions: [
+                    {
+                        question: "Hva er hovedkjennetegnene pa preeklampsi?",
+                        options: [
+                            "Kun hodepine",
+                            "Hypertensjon og proteinuri etter uke 20",
+                            "Kun kvalme",
+                            "Lavt blodtrykk"
+                        ],
+                        correct: 1,
+                        explanation: "Preeklampsi defineres som nyoppstatt hypertensjon (>140/90) og proteinuri (eller annen organpavirkning) etter svangerskapsuke 20."
+                    },
+                    {
+                        question: "Hva er HELLP-syndrom?",
+                        options: [
+                            "En type fodselsdepresjon",
+                            "Hemolyse, forhoyede leverenzymer, lave blodplater",
+                            "Kun anemi",
+                            "Infeksjon i placenta"
+                        ],
+                        correct: 1,
+                        explanation: "HELLP star for Hemolysis, Elevated Liver enzymes, Low Platelets. Det er en alvorlig komplikasjon til preeklampsi som krever rask forlosning."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Klinisk intensivsykepleie - Obstetrikk",
+                questions: [
+                    {
+                        question: "Hva er forstelinjebehandling ved eklampsi (kramper)?",
+                        options: [
+                            "Diazepam",
+                            "Magnesiumsulfat",
+                            "Fenytoin",
+                            "Paracetamol"
+                        ],
+                        correct: 1,
+                        explanation: "Magnesiumsulfat er forstevalgspreparat ved eklampsi. Det forebygger og behandler kramper og har bedre sikkerhetsprofil enn andre antiepileptika i denne situasjonen."
+                    },
+                    {
+                        question: "Hva er viktigste tiltak ved postpartumblodning >1000 ml?",
+                        options: [
+                            "Avvente spontan stans",
+                            "Uterusmassasje og uterotonics",
+                            "Kun observasjon",
+                            "Smertestillende"
+                        ],
+                        correct: 1,
+                        explanation: "Ved postpartumblodning er rask intervensjon kritisk. Uterusmassasje stimulerer kontraksjon, og uterotonics (oxytocin, ergometrin) gis for a stanse blodningen."
+                    }
+                ]
+            }
+        },
+
+        // ----------------------------------------
+        // 10. PERSONALROM
+        // ----------------------------------------
+        "personal": {
+            "MINA200": {
+                name: "Etikk og teori",
+                questions: [
+                    {
+                        question: "Hva er de fire bioetiske prinsippene?",
+                        options: [
+                            "Effektivitet, okonomi, kvalitet, sikkerhet",
+                            "Autonomi, velgjørenhet, ikke-skade, rettferdighet",
+                            "Dokumentasjon, kommunikasjon, samarbeid, ledelse",
+                            "Diagnose, behandling, pleie, rehabilitering"
+                        ],
+                        correct: 1,
+                        explanation: "De fire bioetiske prinsippene (Beauchamp & Childress) er autonomi, velgjorenhet (beneficence), ikke-skade (non-maleficence) og rettferdighet (justice)."
+                    },
+                    {
+                        question: "Hva menes med 'shared decision making'?",
+                        options: [
+                            "Legen bestemmer alene",
+                            "Samvalg mellom helsepersonell og pasient/parorende",
+                            "Pasienten bestemmer alene",
+                            "Ledelsen bestemmer behandling"
+                        ],
+                        correct: 1,
+                        explanation: "Shared decision making (samvalg) innebærer at behandlingsbeslutninger tas i samarbeid mellom helsepersonell og pasient/parorende, basert pa fagkunnskap og pasientens verdier."
+                    }
+                ]
+            },
+            "MISY200": {
+                name: "Pasientsikkerhet og kommunikasjon",
+                questions: [
+                    {
+                        question: "Hva er ISBAR?",
+                        options: [
+                            "En type medisin",
+                            "Strukturert kommunikasjonsverktoy",
+                            "Scoringssystem for sepsis",
+                            "Dokumentasjonsmal"
+                        ],
+                        correct: 1,
+                        explanation: "ISBAR (Identifikasjon, Situasjon, Bakgrunn, Analyse, Rad) er et strukturert kommunikasjonsverktoy som sikrer at viktig informasjon formidles korrekt mellom helsepersonell."
+                    },
+                    {
+                        question: "Hva er hovedmalet med debriefing etter kritiske hendelser?",
+                        options: [
+                            "Finne syndebukker",
+                            "Laering og forbedring i et trygt miljo",
+                            "Dokumentasjon for rettssaker",
+                            "Spare tid"
+                        ],
+                        correct: 1,
+                        explanation: "Debriefing har som mal å fremme laering og forbedring i et psykologisk trygt miljo. Fokus er pa systemforbedring, ikke individuell skyld."
+                    }
+                ]
+            }
+        }
+    };
+
+    // ============================================
+    // AVDELINGSKONFIGURASJON
+    // ============================================
+    // Definerer alle avdelinger med posisjon, storrelse og info
+
+    const departments = {
+        intensiv: {
+            name: "Intensivavdeling (ICU)",
+            shortName: "ICU",
+            topics: "ARDS, Sepsis, ECMO, Impella, PiCCO/Swan Ganz",
+            color: "#e74c3c",
+            x: 2, y: 1, // Posisjon i grid
+            width: 3, height: 2
+        },
+        akutt: {
+            name: "Akuttmottak",
+            shortName: "AKUTT",
+            topics: "Multitraume, Hypo/hypertermi, Akutte situasjoner",
+            color: "#e67e22",
+            x: 6, y: 1,
+            width: 3, height: 2
+        },
+        hjerte: {
+            name: "Hjerteavdeling",
+            shortName: "HJERTE",
+            topics: "Hjertestotte, DIC, IABP",
+            color: "#c0392b",
+            x: 10, y: 1,
+            width: 3, height: 2
+        },
+        lunge: {
+            name: "Lungeavdeling",
+            shortName: "LUNGE",
+            topics: "ARDS, Respirasjonsstotte",
+            color: "#3498db",
+            x: 2, y: 4,
+            width: 3, height: 2
+        },
+        nevro: {
+            name: "Nevrologisk avdeling",
+            shortName: "NEVRO",
+            topics: "CNS-svikt, Delirium",
+            color: "#9b59b6",
+            x: 6, y: 4,
+            width: 3, height: 2
+        },
+        dialyse: {
+            name: "Dialyseavdeling",
+            shortName: "DIALYSE",
+            topics: "Nyreerstattende behandling",
+            color: "#1abc9c",
+            x: 10, y: 4,
+            width: 3, height: 2
+        },
+        gastro: {
+            name: "Gastro/Lever",
+            shortName: "GASTRO",
+            topics: "GI-svikt, Leversvikt, Ernaering",
+            color: "#27ae60",
+            x: 2, y: 7,
+            width: 3, height: 2
+        },
+        barn: {
+            name: "Barneavdeling",
+            shortName: "BARN",
+            topics: "Pediatri, Neonatal, Parorende",
+            color: "#f39c12",
+            x: 6, y: 7,
+            width: 3, height: 2
+        },
+        fode: {
+            name: "Fodeavdeling",
+            shortName: "FODE",
+            topics: "Akutte tilstander gravide",
+            color: "#e91e63",
+            x: 10, y: 7,
+            width: 3, height: 2
+        },
+        personal: {
+            name: "Personalrom",
+            shortName: "PERSONAL",
+            topics: "Etikk, Kommunikasjon, Pasientsikkerhet",
+            color: "#607d8b",
+            x: 6, y: 10,
+            width: 3, height: 2
+        }
+    };
+
+    // ============================================
+    // SPILLKONSTANTER
+    // ============================================
+
+    const TILE_SIZE = 32;           // Storrelse pa hver tile i piksler
+    const MAP_WIDTH = 15;           // Antall tiles i bredden
+    const MAP_HEIGHT = 13;          // Antall tiles i hoyden
+    const PLAYER_SPEED = 3;         // Bevegelseshastighet
+    const ANIMATION_SPEED = 150;    // Millisekunder mellom animasjonsframes
+
+    // ============================================
+    // SPILLVARIABLER
+    // ============================================
+
+    let canvas, ctx, minimapCanvas, minimapCtx;
+    let canvasWidth, canvasHeight;
+
+    // Spillerdata
+    let player = {
+        x: 7 * TILE_SIZE,           // Startposisjon X (midt pa kartet)
+        y: 11 * TILE_SIZE,          // Startposisjon Y (nede i korridoren)
+        width: TILE_SIZE * 0.75,
+        height: TILE_SIZE * 0.75,
+        direction: 'down',          // Retning spilleren ser
+        frame: 0,                   // Animasjonsframe
+        lastFrameTime: 0
+    };
+
+    // Inputtilstand
+    let keys = {
+        up: false,
+        down: false,
+        left: false,
+        right: false
+    };
+
+    // Spilltilstand
+    let nearDepartment = null;      // Avdeling spilleren er naer
+    let currentQuiz = null;         // Aktiv quiz
+    let currentQuestionIndex = 0;   // Navarende sporsmal
+    let quizScore = 0;              // Score i aktiv quiz
+    let answeredCurrent = false;    // Har svart pa navarende sporsmal
+
+    // Lagret fremgang (fra localStorage)
+    let progress = loadProgress();
+
+    // ============================================
+    // INITIALISERING
+    // ============================================
+
+    function init() {
+        // Hent canvas-elementer
+        canvas = document.getElementById('gameCanvas');
+        ctx = canvas.getContext('2d');
+        minimapCanvas = document.getElementById('minimapCanvas');
+        minimapCtx = minimapCanvas.getContext('2d');
+
+        // Beregn canvas-storrelse
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Sett opp input-handlers
+        setupKeyboardInput();
+        setupTouchInput();
+
+        // Oppdater HUD
+        updateHUD();
+
+        // Start spilløkken
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Tilpass canvas til vindusstrrelse
+    function resizeCanvas() {
+        const container = document.getElementById('game-container');
+        const maxWidth = Math.min(window.innerWidth - 20, MAP_WIDTH * TILE_SIZE);
+        const maxHeight = Math.min(window.innerHeight - 150, MAP_HEIGHT * TILE_SIZE);
+
+        // Behold aspektforhold
+        const scale = Math.min(maxWidth / (MAP_WIDTH * TILE_SIZE), maxHeight / (MAP_HEIGHT * TILE_SIZE));
+
+        canvasWidth = Math.floor(MAP_WIDTH * TILE_SIZE * scale);
+        canvasHeight = Math.floor(MAP_HEIGHT * TILE_SIZE * scale);
+
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        canvas.style.width = canvasWidth + 'px';
+        canvas.style.height = canvasHeight + 'px';
+
+        // Skaler konteksten for pixel-perfekt rendering
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+    }
+
+    // ============================================
+    // INPUT HANDLERS
+    // ============================================
+
+    function setupKeyboardInput() {
+        document.addEventListener('keydown', (e) => {
+            // Hindre scrolling med piltaster
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+                e.preventDefault();
+            }
+
+            switch(e.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    keys.up = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    keys.down = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    keys.left = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    keys.right = true;
+                    break;
+                case 'Space':
+                case 'Enter':
+                    handleInteraction();
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch(e.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    keys.up = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    keys.down = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    keys.left = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    keys.right = false;
+                    break;
+            }
+        });
+    }
+
+    function setupTouchInput() {
+        // D-pad knapper
+        const dpadBtns = document.querySelectorAll('.dpad-btn[data-dir]');
+        dpadBtns.forEach(btn => {
+            const dir = btn.dataset.dir;
+
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys[dir] = true;
+            });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys[dir] = false;
+            });
+
+            btn.addEventListener('mousedown', () => keys[dir] = true);
+            btn.addEventListener('mouseup', () => keys[dir] = false);
+            btn.addEventListener('mouseleave', () => keys[dir] = false);
+        });
+
+        // Action-knapp
+        const actionBtn = document.getElementById('action-btn');
+        actionBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleInteraction();
+        });
+        actionBtn.addEventListener('click', handleInteraction);
+    }
+
+    // ============================================
+    // SPILLOGIKK
+    // ============================================
+
+    function gameLoop(timestamp) {
+        update(timestamp);
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function update(timestamp) {
+        // Oppdater spillerbevegelse
+        let dx = 0, dy = 0;
+
+        if (keys.up) dy -= PLAYER_SPEED;
+        if (keys.down) dy += PLAYER_SPEED;
+        if (keys.left) dx -= PLAYER_SPEED;
+        if (keys.right) dx += PLAYER_SPEED;
+
+        // Normaliser diagonal bevegelse
+        if (dx !== 0 && dy !== 0) {
+            dx *= 0.707;
+            dy *= 0.707;
+        }
+
+        // Oppdater retning
+        if (dy < 0) player.direction = 'up';
+        else if (dy > 0) player.direction = 'down';
+        if (dx < 0) player.direction = 'left';
+        else if (dx > 0) player.direction = 'right';
+
+        // Beregn ny posisjon
+        let newX = player.x + dx;
+        let newY = player.y + dy;
+
+        // Kollisjonsjekk - kan ikke ga gjennom vegger eller inn i rom direkte
+        if (!checkCollision(newX, player.y)) {
+            player.x = newX;
+        }
+        if (!checkCollision(player.x, newY)) {
+            player.y = newY;
+        }
+
+        // Hold spilleren innenfor kartet
+        player.x = Math.max(0, Math.min(player.x, (MAP_WIDTH - 1) * TILE_SIZE));
+        player.y = Math.max(0, Math.min(player.y, (MAP_HEIGHT - 1) * TILE_SIZE));
+
+        // Oppdater animasjon hvis spilleren beveger seg
+        if (dx !== 0 || dy !== 0) {
+            if (timestamp - player.lastFrameTime > ANIMATION_SPEED) {
+                player.frame = (player.frame + 1) % 4;
+                player.lastFrameTime = timestamp;
+            }
+        } else {
+            player.frame = 0;
+        }
+
+        // Sjekk om spilleren er naer en avdeling
+        checkNearDepartment();
+    }
+
+    function checkCollision(x, y) {
+        // Spillerens bounding box
+        const playerLeft = x;
+        const playerRight = x + player.width;
+        const playerTop = y;
+        const playerBottom = y + player.height;
+
+        // Sjekk kollisjon med avdelinger (vegger)
+        for (const [id, dept] of Object.entries(departments)) {
+            const deptLeft = dept.x * TILE_SIZE;
+            const deptRight = (dept.x + dept.width) * TILE_SIZE;
+            const deptTop = dept.y * TILE_SIZE;
+            const deptBottom = (dept.y + dept.height) * TILE_SIZE;
+
+            // Sjekk overlapp
+            if (playerRight > deptLeft && playerLeft < deptRight &&
+                playerBottom > deptTop && playerTop < deptBottom) {
+                return true; // Kollisjon!
+            }
+        }
+
+        return false;
+    }
+
+    function checkNearDepartment() {
+        const hint = document.getElementById('interaction-hint');
+        nearDepartment = null;
+
+        // Spillerens senterposisjon
+        const playerCenterX = player.x + player.width / 2;
+        const playerCenterY = player.y + player.height / 2;
+
+        // Sjekk avstand til hver avdeling
+        for (const [id, dept] of Object.entries(departments)) {
+            // Beregn naermeste punkt pa avdelingen
+            const deptCenterX = (dept.x + dept.width / 2) * TILE_SIZE;
+            const deptCenterY = (dept.y + dept.height / 2) * TILE_SIZE;
+
+            // Sjekk om spilleren er rett utenfor avdelingen
+            const deptLeft = dept.x * TILE_SIZE;
+            const deptRight = (dept.x + dept.width) * TILE_SIZE;
+            const deptTop = dept.y * TILE_SIZE;
+            const deptBottom = (dept.y + dept.height) * TILE_SIZE;
+
+            // Er spilleren naer noen av kantene?
+            const nearLeft = playerCenterX >= deptLeft - TILE_SIZE && playerCenterX < deptLeft &&
+                            playerCenterY >= deptTop && playerCenterY <= deptBottom;
+            const nearRight = playerCenterX <= deptRight + TILE_SIZE && playerCenterX > deptRight &&
+                             playerCenterY >= deptTop && playerCenterY <= deptBottom;
+            const nearTop = playerCenterY >= deptTop - TILE_SIZE && playerCenterY < deptTop &&
+                           playerCenterX >= deptLeft && playerCenterX <= deptRight;
+            const nearBottom = playerCenterY <= deptBottom + TILE_SIZE && playerCenterY > deptBottom &&
+                              playerCenterX >= deptLeft && playerCenterX <= deptRight;
+
+            if (nearLeft || nearRight || nearTop || nearBottom) {
+                nearDepartment = id;
+                break;
+            }
+        }
+
+        // Vis/skjul interaksjonsindikator
+        if (nearDepartment) {
+            hint.textContent = `Trykk SPACE for å gå inn i ${departments[nearDepartment].shortName}`;
+            hint.style.display = 'block';
+            document.getElementById('current-area').textContent = departments[nearDepartment].shortName;
+        } else {
+            hint.style.display = 'none';
+            document.getElementById('current-area').textContent = 'Korridor';
+        }
+    }
+
+    function handleInteraction() {
+        if (nearDepartment) {
+            openDepartmentModal(nearDepartment);
+        }
+    }
+
+    // ============================================
+    // RENDERING
+    // ============================================
+
+    function render() {
+        // Tøm canvas
+        ctx.fillStyle = '#4a4a5a';
+        ctx.fillRect(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
+
+        // Tegn gulv (korridor)
+        drawFloor();
+
+        // Tegn avdelinger
+        drawDepartments();
+
+        // Tegn spilleren
+        drawPlayer();
+
+        // Tegn minimap
+        drawMinimap();
+    }
+
+    function drawFloor() {
+        // Tegn rutemonstret gulv i korridoren
+        for (let y = 0; y < MAP_HEIGHT; y++) {
+            for (let x = 0; x < MAP_WIDTH; x++) {
+                // Sjekk om denne tile er innenfor en avdeling
+                let inDepartment = false;
+                for (const dept of Object.values(departments)) {
+                    if (x >= dept.x && x < dept.x + dept.width &&
+                        y >= dept.y && y < dept.y + dept.height) {
+                        inDepartment = true;
+                        break;
+                    }
+                }
+
+                if (!inDepartment) {
+                    // Tegn korridorgulv med sjakkmønster
+                    const isLight = (x + y) % 2 === 0;
+                    ctx.fillStyle = isLight ? '#6b6b7b' : '#5a5a6a';
+                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+                    // Tegn subtil tile-kant
+                    ctx.strokeStyle = '#4a4a5a';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+    }
+
+    function drawDepartments() {
+        for (const [id, dept] of Object.entries(departments)) {
+            const x = dept.x * TILE_SIZE;
+            const y = dept.y * TILE_SIZE;
+            const w = dept.width * TILE_SIZE;
+            const h = dept.height * TILE_SIZE;
+
+            // Gulv i avdelingen
+            ctx.fillStyle = adjustColor(dept.color, -30);
+            ctx.fillRect(x, y, w, h);
+
+            // Vegger (3D-effekt)
+            const wallHeight = 8;
+
+            // Topp-vegg
+            ctx.fillStyle = adjustColor(dept.color, 20);
+            ctx.fillRect(x, y, w, wallHeight);
+
+            // Venstre vegg
+            ctx.fillStyle = adjustColor(dept.color, -10);
+            ctx.fillRect(x, y, wallHeight, h);
+
+            // Høyre vegg (mørkere)
+            ctx.fillStyle = adjustColor(dept.color, -40);
+            ctx.fillRect(x + w - wallHeight, y, wallHeight, h);
+
+            // Bunn-vegg
+            ctx.fillStyle = adjustColor(dept.color, -20);
+            ctx.fillRect(x, y + h - wallHeight, w, wallHeight);
+
+            // Dor (nederst pa avdelingen)
+            const doorWidth = TILE_SIZE;
+            const doorX = x + (w - doorWidth) / 2;
+            const doorY = y + h - wallHeight;
+
+            // Er spilleren nær denne avdelingen?
+            const isNear = nearDepartment === id;
+
+            ctx.fillStyle = isNear ? '#90ee90' : '#8b4513';
+            ctx.fillRect(doorX, doorY, doorWidth, wallHeight + 2);
+
+            // Darhondtak
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(doorX + doorWidth - 8, doorY + wallHeight/2 - 2, 4, 4);
+
+            // Avdelingsnavn (inne i rommet)
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Courier New';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(dept.shortName, x + w/2, y + h/2 - 8);
+
+            // Fremgangsindikator
+            const completed = getCompletedQuizCount(id);
+            const total = 2; // MINA200 + MISY200
+
+            if (completed > 0) {
+                // Tegn stjerner for fullførte quizer
+                ctx.fillStyle = '#ffd700';
+                ctx.font = '12px Arial';
+                const stars = completed === total ? '**' : '*';
+                ctx.fillText(stars, x + w/2, y + h/2 + 10);
+            }
+        }
+    }
+
+    function drawPlayer() {
+        const x = player.x;
+        const y = player.y;
+        const size = player.width;
+
+        // Skygge
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(x + size/2, y + size - 2, size/2 - 2, size/4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Kropp (sykepleieruniform - hvit med blå detaljer)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + size*0.2, y + size*0.35, size*0.6, size*0.5);
+
+        // Hode
+        ctx.fillStyle = '#ffdbac';
+        ctx.beginPath();
+        ctx.arc(x + size/2, y + size*0.25, size*0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hår
+        ctx.fillStyle = '#4a3728';
+        ctx.beginPath();
+        ctx.arc(x + size/2, y + size*0.18, size*0.18, Math.PI, Math.PI * 2);
+        ctx.fill();
+
+        // Øyne (basert pa retning)
+        ctx.fillStyle = '#333';
+        const eyeOffsetX = player.direction === 'left' ? -2 : (player.direction === 'right' ? 2 : 0);
+        const eyeOffsetY = player.direction === 'up' ? -2 : (player.direction === 'down' ? 2 : 0);
+
+        if (player.direction !== 'up') {
+            ctx.fillRect(x + size*0.4 + eyeOffsetX, y + size*0.22 + eyeOffsetY, 2, 2);
+            ctx.fillRect(x + size*0.55 + eyeOffsetX, y + size*0.22 + eyeOffsetY, 2, 2);
+        }
+
+        // Sykepleiersymbol (kors) pa uniformen
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(x + size*0.45, y + size*0.45, size*0.1, size*0.2);
+        ctx.fillRect(x + size*0.4, y + size*0.5, size*0.2, size*0.1);
+
+        // Ben (animert)
+        const legOffset = Math.sin(player.frame * Math.PI / 2) * 3;
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(x + size*0.25, y + size*0.8 + legOffset, size*0.15, size*0.2);
+        ctx.fillRect(x + size*0.6, y + size*0.8 - legOffset, size*0.15, size*0.2);
+    }
+
+    function drawMinimap() {
+        const scale = 8; // Hver tile er 8 piksler pa minimap
+
+        // Bakgrunn
+        minimapCtx.fillStyle = '#2d2d44';
+        minimapCtx.fillRect(0, 0, 120, 80);
+
+        // Tegn avdelinger
+        for (const dept of Object.values(departments)) {
+            minimapCtx.fillStyle = dept.color;
+            minimapCtx.fillRect(
+                dept.x * scale,
+                dept.y * scale,
+                dept.width * scale,
+                dept.height * scale
+            );
+        }
+
+        // Tegn spiller
+        minimapCtx.fillStyle = '#ffffff';
+        const playerMapX = (player.x / TILE_SIZE) * scale;
+        const playerMapY = (player.y / TILE_SIZE) * scale;
+        minimapCtx.fillRect(playerMapX, playerMapY, scale, scale);
+    }
+
+    // ============================================
+    // MODAL OG QUIZ-FUNKSJONER
+    // ============================================
+
+    function openDepartmentModal(deptId) {
+        const dept = departments[deptId];
+        const modal = document.getElementById('department-modal');
+
+        document.getElementById('dept-title').textContent = dept.name;
+        document.getElementById('dept-name').textContent = dept.name;
+        document.getElementById('dept-topics').textContent = `Temaer: ${dept.topics}`;
+
+        // Generer quiz-valg
+        const quizChoice = document.getElementById('quiz-choice');
+        quizChoice.innerHTML = '';
+
+        const quizes = quizData[deptId];
+        if (quizes) {
+            for (const [code, quiz] of Object.entries(quizes)) {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-btn';
+
+                const completed = isQuizCompleted(deptId, code);
+                const bestScore = getBestScore(deptId, code);
+
+                btn.innerHTML = `
+                    <span class="quiz-name">${code}: ${quiz.name}</span>
+                    <span class="quiz-desc">${quiz.questions.length} sporsmal</span>
+                    ${completed ? `<span class="quiz-progress">Beste resultat: ${bestScore}/${quiz.questions.length}</span>` : ''}
+                `;
+
+                btn.onclick = () => startQuiz(deptId, code);
+                quizChoice.appendChild(btn);
+            }
+        }
+
+        modal.classList.add('active');
+    }
+
+    function closeDepartmentModal() {
+        document.getElementById('department-modal').classList.remove('active');
+    }
+
+    function startQuiz(deptId, quizCode) {
+        closeDepartmentModal();
+
+        currentQuiz = {
+            deptId: deptId,
+            code: quizCode,
+            data: quizData[deptId][quizCode]
+        };
+        currentQuestionIndex = 0;
+        quizScore = 0;
+        answeredCurrent = false;
+
+        const modal = document.getElementById('quiz-modal');
+        document.getElementById('quiz-title').textContent =
+            `${quizCode}: ${currentQuiz.data.name}`;
+
+        modal.classList.add('active');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const quiz = currentQuiz.data;
+        const question = quiz.questions[currentQuestionIndex];
+        const container = document.getElementById('quiz-content');
+
+        container.innerHTML = `
+            <div class="question-container">
+                <p class="question-progress">
+                    Sporsmal ${currentQuestionIndex + 1} av ${quiz.questions.length}
+                </p>
+                <div class="question-text">${question.question}</div>
+                <div class="options" id="options-container">
+                    ${question.options.map((opt, i) => `
+                        <button class="option-btn" data-index="${i}">${opt}</button>
+                    `).join('')}
+                </div>
+                <div class="explanation" id="explanation">
+                    <h4>Forklaring:</h4>
+                    <p>${question.explanation}</p>
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="next-btn" id="next-btn" style="display: none;">
+                    ${currentQuestionIndex < quiz.questions.length - 1 ? 'Neste sporsmal' : 'Se resultat'}
+                </button>
+            </div>
+        `;
+
+        // Legg til klikk-handlers pa svarknappene
+        const optionBtns = container.querySelectorAll('.option-btn');
+        optionBtns.forEach(btn => {
+            btn.addEventListener('click', () => selectAnswer(parseInt(btn.dataset.index)));
+        });
+
+        document.getElementById('next-btn').addEventListener('click', nextQuestion);
+    }
+
+    function selectAnswer(selectedIndex) {
+        if (answeredCurrent) return;
+        answeredCurrent = true;
+
+        const question = currentQuiz.data.questions[currentQuestionIndex];
+        const optionBtns = document.querySelectorAll('.option-btn');
+
+        // Deaktiver alle knapper
+        optionBtns.forEach(btn => btn.disabled = true);
+
+        // Marker riktig og feil svar
+        optionBtns.forEach((btn, i) => {
+            if (i === question.correct) {
+                btn.classList.add('correct');
+            } else if (i === selectedIndex && selectedIndex !== question.correct) {
+                btn.classList.add('incorrect');
+            }
+        });
+
+        // Oppdater score
+        if (selectedIndex === question.correct) {
+            quizScore++;
+        }
+
+        // Vis forklaring og neste-knapp
+        document.getElementById('explanation').classList.add('show');
+        document.getElementById('next-btn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        answeredCurrent = false;
+
+        if (currentQuestionIndex < currentQuiz.data.questions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        const quiz = currentQuiz.data;
+        const totalQuestions = quiz.questions.length;
+        const percentage = Math.round((quizScore / totalQuestions) * 100);
+
+        // Beregn stjerner
+        let stars = '';
+        if (percentage >= 90) stars = '* * *';
+        else if (percentage >= 70) stars = '* *';
+        else if (percentage >= 50) stars = '*';
+        else stars = '-';
+
+        // Velg melding basert pa score
+        let message = '';
+        if (percentage >= 90) message = 'Fantastisk! Du mestrer dette stoffet!';
+        else if (percentage >= 70) message = 'Bra jobbet! Du har god kunnskap.';
+        else if (percentage >= 50) message = 'Grei innsats. Oves litt mer!';
+        else message = 'Her er det rom for forbedring. Prov igjen!';
+
+        const container = document.getElementById('quiz-content');
+        container.innerHTML = `
+            <div class="result-container">
+                <div class="result-stars">${stars}</div>
+                <div class="result-score">${quizScore}/${totalQuestions}</div>
+                <p class="result-message">${message}</p>
+                <p>${percentage}% riktig</p>
+            </div>
+            <div class="btn-row">
+                <button class="back-btn" onclick="retryQuiz()">Prov igjen</button>
+                <button class="close-btn" onclick="closeQuizModal()">Lukk</button>
+            </div>
+        `;
+
+        // Lagre fremgang
+        saveQuizResult(currentQuiz.deptId, currentQuiz.code, quizScore, totalQuestions);
+        updateHUD();
+    }
+
+    function retryQuiz() {
+        currentQuestionIndex = 0;
+        quizScore = 0;
+        answeredCurrent = false;
+        showQuestion();
+    }
+
+    function closeQuizModal() {
+        document.getElementById('quiz-modal').classList.remove('active');
+        currentQuiz = null;
+    }
+
+    // ============================================
+    // LAGRING OG FREMGANG
+    // ============================================
+
+    function loadProgress() {
+        const saved = localStorage.getItem('sykehusQuizProgress');
+        return saved ? JSON.parse(saved) : {};
+    }
+
+    function saveProgress() {
+        localStorage.setItem('sykehusQuizProgress', JSON.stringify(progress));
+    }
+
+    function saveQuizResult(deptId, quizCode, score, total) {
+        if (!progress[deptId]) {
+            progress[deptId] = {};
+        }
+
+        const key = quizCode;
+        const existing = progress[deptId][key];
+
+        // Lagre bare hvis bedre enn tidligere
+        if (!existing || score > existing.score) {
+            progress[deptId][key] = {
+                score: score,
+                total: total,
+                completedAt: new Date().toISOString()
+            };
+        }
+
+        saveProgress();
+    }
+
+    function isQuizCompleted(deptId, quizCode) {
+        return progress[deptId] && progress[deptId][quizCode];
+    }
+
+    function getBestScore(deptId, quizCode) {
+        if (progress[deptId] && progress[deptId][quizCode]) {
+            return progress[deptId][quizCode].score;
+        }
+        return 0;
+    }
+
+    function getCompletedQuizCount(deptId) {
+        if (!progress[deptId]) return 0;
+        return Object.keys(progress[deptId]).length;
+    }
+
+    function getTotalCompletedQuizzes() {
+        let total = 0;
+        for (const deptProgress of Object.values(progress)) {
+            total += Object.keys(deptProgress).length;
+        }
+        return total;
+    }
+
+    function updateHUD() {
+        document.getElementById('completed-count').textContent = getTotalCompletedQuizzes();
+    }
+
+    // ============================================
+    // HJELPEFUNKSJONER
+    // ============================================
+
+    // Juster en farge lysere eller mørkere
+    function adjustColor(color, amount) {
+        // Konverter hex til RGB
+        let r = parseInt(color.slice(1, 3), 16);
+        let g = parseInt(color.slice(3, 5), 16);
+        let b = parseInt(color.slice(5, 7), 16);
+
+        // Juster
+        r = Math.max(0, Math.min(255, r + amount));
+        g = Math.max(0, Math.min(255, g + amount));
+        b = Math.max(0, Math.min(255, b + amount));
+
+        // Konverter tilbake til hex
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
+    // ============================================
+    // START SPILLET
+    // ============================================
+
+    // Vent til DOM er lastet
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    </script>
+</body>
+</html>
