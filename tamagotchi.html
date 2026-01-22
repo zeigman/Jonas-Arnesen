@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="no" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasient-Tamagotchi - Jonas</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           CSS VARIABLER - FARGEPALETT
+           ======================================== */
+        :root {
+            /* Neon-farger */
+            --cyan: #00FFFF;
+            --magenta: #FF00FF;
+            --cyan-dark: #00CCCC;
+            --magenta-dark: #CC00CC;
+
+            /* Mørk tema (standard) */
+            --bg-dark: #0a0a0f;
+            --bg-darker: #050508;
+            --bg-gray: #1a1a24;
+            --text-light: #E0E0E8;
+            --text-muted: #8888aa;
+
+            /* Status-farger */
+            --status-good: #00FF88;
+            --status-warning: #FFAA00;
+            --status-danger: #FF4444;
+            --status-sleep: #8888FF;
+        }
+
+        /* Lyst tema overrides */
+        [data-theme="light"] {
+            --bg-dark: #f5f5f8;
+            --bg-darker: #ffffff;
+            --bg-gray: #e8e8f0;
+            --text-light: #1a1a24;
+            --text-muted: #5a5a6a;
+            --cyan: #00CCCC;
+            --magenta: #CC00CC;
+        }
+
+        /* ========================================
+           RESET OG BASE-STILER
+           ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ========================================
+           HEADER
+           ======================================== */
+        header {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--bg-darker), transparent);
+        }
+
+        .logo {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: var(--text-light);
+            transition: color 0.3s ease;
+        }
+
+        .logo:hover {
+            color: var(--cyan);
+        }
+
+        .back-link {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link::before {
+            content: '<';
+            color: var(--cyan);
+        }
+
+        .back-link:hover {
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* ========================================
+           HOVEDINNHOLD
+           ======================================== */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        .game-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .game-subtitle {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: -1rem;
+        }
+
+        /* ========================================
+           SPILLCONTAINER
+           ======================================== */
+        .game-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1200px;
+        }
+
+        /* ========================================
+           PASIENT-DISPLAY
+           ======================================== */
+        .patient-display {
+            position: relative;
+            padding: 4px;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+        }
+
+        .patient-inner {
+            background: var(--bg-darker);
+            width: 300px;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Rommet/Bakgrunn */
+        .room-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, var(--bg-gray) 0%, var(--bg-darker) 100%);
+            transition: all 0.5s ease;
+        }
+
+        .room-bg.night {
+            background: linear-gradient(180deg, #0a0a15 0%, #050508 100%);
+        }
+
+        /* Vindu */
+        .window {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 50px;
+            border: 3px solid var(--cyan);
+            background: linear-gradient(180deg, #1a3a4a 0%, #0a2a3a 100%);
+            transition: all 0.5s ease;
+        }
+
+        .window.night {
+            background: linear-gradient(180deg, #0a0a20 0%, #050510 100%);
+            border-color: var(--magenta);
+        }
+
+        .window::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--cyan);
+        }
+
+        .window.night::after {
+            background: var(--magenta);
+        }
+
+        /* Seng */
+        .bed {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 80px;
+        }
+
+        .bed-frame {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: var(--bg-gray);
+            border: 2px solid var(--text-muted);
+        }
+
+        .bed-mattress {
+            position: absolute;
+            bottom: 28px;
+            left: 5px;
+            right: 5px;
+            height: 20px;
+            background: #3a3a5a;
+            border: 2px solid var(--text-muted);
+        }
+
+        .bed-pillow {
+            position: absolute;
+            bottom: 46px;
+            left: 10px;
+            width: 50px;
+            height: 25px;
+            background: #e8e8f0;
+            border-radius: 5px;
+        }
+
+        .bed-blanket {
+            position: absolute;
+            bottom: 46px;
+            left: 65px;
+            right: 10px;
+            height: 30px;
+            background: linear-gradient(90deg, var(--cyan-dark), var(--magenta-dark));
+            opacity: 0.8;
+            border-radius: 3px;
+        }
+
+        /* Pasient (Pixel-art stil) */
+        .patient {
+            position: absolute;
+            bottom: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .patient-head {
+            width: 40px;
+            height: 40px;
+            background: #FFD5B8;
+            border-radius: 50%;
+            position: relative;
+            margin: 0 auto;
+            border: 2px solid #E8C0A0;
+        }
+
+        /* Øyne */
+        .patient-eyes {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .eye {
+            width: 6px;
+            height: 6px;
+            background: #333;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .patient.sleeping .eye {
+            height: 2px;
+            border-radius: 0;
+        }
+
+        .patient.sad .eye {
+            background: #5555aa;
+        }
+
+        /* Munn */
+        .patient-mouth {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 6px;
+            border-bottom: 3px solid #CC6666;
+            border-radius: 0 0 50% 50%;
+            transition: all 0.3s ease;
+        }
+
+        .patient.sad .patient-mouth {
+            border-bottom: none;
+            border-top: 3px solid #CC6666;
+            border-radius: 50% 50% 0 0;
+        }
+
+        .patient.hungry .patient-mouth {
+            width: 8px;
+            height: 8px;
+            border: 2px solid #CC6666;
+            border-radius: 50%;
+            background: #440000;
+        }
+
+        .patient.sleeping .patient-mouth {
+            width: 8px;
+            border-bottom: 2px solid #CC6666;
+        }
+
+        /* Kropp under dynen */
+        .patient-body {
+            width: 60px;
+            height: 20px;
+            background: #90C0FF;
+            margin-top: -5px;
+            border-radius: 5px 5px 0 0;
+            border: 2px solid #70A0DD;
+            position: relative;
+        }
+
+        /* ZZZ animasjon */
+        .zzz {
+            position: absolute;
+            top: -30px;
+            right: -20px;
+            font-family: 'Silkscreen', cursive;
+            font-size: 1rem;
+            color: var(--status-sleep);
+            opacity: 0;
+            animation: none;
+        }
+
+        .patient.sleeping .zzz {
+            animation: zzz 2s infinite;
+        }
+
+        @keyframes zzz {
+            0%, 100% { opacity: 0; transform: translateY(0) scale(0.8); }
+            50% { opacity: 1; transform: translateY(-10px) scale(1); }
+        }
+
+        /* Snakkeboble */
+        .speech-bubble {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-light);
+            color: var(--bg-darker);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 20;
+        }
+
+        .speech-bubble.visible {
+            opacity: 1;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--text-light);
+        }
+
+        /* Handlings-animasjon */
+        .action-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 30;
+        }
+
+        .action-effect.animate {
+            animation: actionPop 0.6s ease-out;
+        }
+
+        @keyframes actionPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -70%) scale(1); }
+        }
+
+        /* ========================================
+           STATUS-PANEL
+           ======================================== */
+        .status-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 250px;
+        }
+
+        .status-box {
+            background: var(--bg-gray);
+            padding: 1rem;
+            position: relative;
+        }
+
+        .status-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.55rem;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .status-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .status-bar {
+            height: 12px;
+            background: var(--bg-darker);
+            border: 1px solid var(--text-muted);
+            overflow: hidden;
+        }
+
+        .status-fill {
+            height: 100%;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+        .status-fill.health { background: var(--status-good); }
+        .status-fill.hydration { background: var(--cyan); }
+        .status-fill.nutrition { background: var(--status-warning); }
+        .status-fill.hygiene { background: var(--magenta); }
+        .status-fill.mood { background: #FF88FF; }
+        .status-fill.rest { background: var(--status-sleep); }
+
+        .status-fill.low { background: var(--status-danger); }
+        .status-fill.medium { background: var(--status-warning); }
+
+        /* ========================================
+           HANDLINGSKNAPPER
+           ======================================== */
+        .actions-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 200px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.55rem;
+            letter-spacing: 1px;
+            padding: 0.75rem;
+            border: 1px solid var(--cyan);
+            background: transparent;
+            color: var(--cyan);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .action-btn:hover {
+            background: var(--cyan);
+            color: var(--bg-darker);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-btn:disabled:hover {
+            background: transparent;
+            color: var(--cyan);
+            box-shadow: none;
+        }
+
+        .action-btn.magenta {
+            border-color: var(--magenta);
+            color: var(--magenta);
+        }
+
+        .action-btn.magenta:hover {
+            background: var(--magenta);
+            color: var(--bg-darker);
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+        }
+
+        .action-icon {
+            font-size: 1.2rem;
+        }
+
+        /* ========================================
+           INFO-PANEL
+           ======================================== */
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 180px;
+        }
+
+        .info-box {
+            background: var(--bg-gray);
+            padding: 1rem;
+            position: relative;
+        }
+
+        .info-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+        }
+
+        .info-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.55rem;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .info-value.magenta {
+            color: var(--magenta);
+        }
+
+        /* Achievements */
+        .achievements-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .achievement {
+            width: 30px;
+            height: 30px;
+            background: var(--bg-darker);
+            border: 1px solid var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+
+        .achievement.unlocked {
+            opacity: 1;
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .achievement.unlocked:hover {
+            transform: scale(1.1);
+        }
+
+        /* ========================================
+           MELDINGSLOGG
+           ======================================== */
+        .message-log {
+            background: var(--bg-gray);
+            padding: 1rem;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .message-log p {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .message-log p:last-child {
+            border-bottom: none;
+        }
+
+        .message-log .time {
+            color: var(--cyan);
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.6rem;
+        }
+
+        /* ========================================
+           KONTROLL-KNAPPER
+           ======================================== */
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-btn {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--text-muted);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        .control-btn.danger:hover {
+            border-color: var(--status-danger);
+            color: var(--status-danger);
+        }
+
+        /* ========================================
+           VARSLING
+           ======================================== */
+        .alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 0, 0, 0.1);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 50;
+        }
+
+        .alert-overlay.active {
+            animation: alertPulse 1s infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Achievement popup */
+        .achievement-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-gray);
+            border: 2px solid var(--cyan);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transform: translateX(120%);
+            transition: transform 0.5s ease;
+            z-index: 100;
+        }
+
+        .achievement-popup.visible {
+            transform: translateX(0);
+        }
+
+        .achievement-popup-icon {
+            font-size: 2rem;
+        }
+
+        .achievement-popup-text {
+            font-family: 'Silkscreen', cursive;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: var(--cyan);
+        }
+
+        .achievement-popup-name {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        /* ========================================
+           FOOTER
+           ======================================== */
+        footer {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .footer-text span {
+            font-family: 'Silkscreen', cursive;
+        }
+
+        /* ========================================
+           FLYTENDE PIXLER
+           ======================================== */
+        .floating-pixels {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .pixel-float {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            animation: pixelFloat 8s infinite ease-in-out;
+        }
+
+        .pixel-float:nth-child(1) { top: 20%; left: 10%; background: var(--cyan); animation-delay: 0s; }
+        .pixel-float:nth-child(2) { top: 60%; left: 85%; background: var(--magenta); animation-delay: 1s; }
+        .pixel-float:nth-child(3) { top: 30%; left: 70%; background: var(--cyan); animation-delay: 2s; }
+        .pixel-float:nth-child(4) { top: 80%; left: 20%; background: var(--magenta); animation-delay: 3s; }
+        .pixel-float:nth-child(5) { top: 50%; left: 50%; background: var(--cyan); animation-delay: 4s; }
+
+        @keyframes pixelFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+            25% { transform: translateY(-30px) rotate(90deg); opacity: 0.3; }
+            50% { transform: translateY(-10px) rotate(180deg); opacity: 0.8; }
+            75% { transform: translateY(-40px) rotate(270deg); opacity: 0.4; }
+        }
+
+        /* ========================================
+           RESPONSIVT DESIGN
+           ======================================== */
+        @media (max-width: 900px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .status-panel, .actions-panel, .info-panel {
+                width: 100%;
+                max-width: 350px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            header {
+                padding: 1rem 1.5rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            .patient-inner {
+                width: 280px;
+                height: 320px;
+            }
+
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-btn {
+                font-size: 0.5rem;
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flytende pixler -->
+    <div class="floating-pixels">
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+        <div class="pixel-float"></div>
+    </div>
+
+    <!-- Alert overlay -->
+    <div class="alert-overlay" id="alert-overlay"></div>
+
+    <!-- Achievement popup -->
+    <div class="achievement-popup" id="achievement-popup">
+        <div class="achievement-popup-icon" id="achievement-popup-icon"></div>
+        <div>
+            <div class="achievement-popup-text">ACHIEVEMENT UNLOCKED</div>
+            <div class="achievement-popup-name" id="achievement-popup-name"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="logo">jonasarnesen.org</a>
+        <a href="index.html" class="back-link">TILBAKE</a>
+    </header>
+
+    <!-- Hovedinnhold -->
+    <main>
+        <h1 class="game-title">SYKEPLEIER SIMULATOR</h1>
+        <p class="game-subtitle">TA VARE PÅ PASIENTEN DIN</p>
+
+        <div class="game-container">
+            <!-- Pasient Display -->
+            <div class="patient-display">
+                <div class="patient-inner">
+                    <div class="room-bg" id="room-bg"></div>
+                    <div class="window" id="window"></div>
+
+                    <div class="speech-bubble" id="speech-bubble">Hei!</div>
+
+                    <div class="patient" id="patient">
+                        <div class="zzz">Z z z</div>
+                        <div class="patient-head">
+                            <div class="patient-eyes">
+                                <div class="eye"></div>
+                                <div class="eye"></div>
+                            </div>
+                            <div class="patient-mouth"></div>
+                        </div>
+                        <div class="patient-body"></div>
+                    </div>
+
+                    <div class="bed">
+                        <div class="bed-pillow"></div>
+                        <div class="bed-blanket"></div>
+                        <div class="bed-mattress"></div>
+                        <div class="bed-frame"></div>
+                    </div>
+
+                    <div class="action-effect" id="action-effect"></div>
+                </div>
+            </div>
+
+            <!-- Status Panel -->
+            <div class="status-panel">
+                <div class="status-box">
+                    <div class="status-header">
+                        <span class="status-label">HELSE</span>
+                        <span class="status-value" id="health-value">100%</span>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-fill health" id="health-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="status-box">
+                    <div class="status-header">
+                        <span class="status-label">HYDRASJON</span>
+                        <span class="status-value" id="hydration-value">100%</span>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-fill hydration" id="hydration-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="status-box">
+                    <div class="status-header">
+                        <span class="status-label">ERNÆRING</span>
+                        <span class="status-value" id="nutrition-value">100%</span>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-fill nutrition" id="nutrition-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="status-box">
+                    <div class="status-header">
+                        <span class="status-label">HYGIENE</span>
+                        <span class="status-value" id="hygiene-value">100%</span>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-fill hygiene" id="hygiene-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="status-box">
+                    <div class="status-header">
+                        <span class="status-label">HUMØR</span>
+                        <span class="status-value" id="mood-value">100%</span>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-fill mood" id="mood-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="status-box">
+                    <div class="status-header">
+                        <span class="status-label">HVILE</span>
+                        <span class="status-value" id="rest-value">100%</span>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-fill rest" id="rest-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Handlinger -->
+            <div class="actions-panel">
+                <div class="info-box">
+                    <div class="info-label">HANDLINGER</div>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="doAction('medicine')">
+                            <span class="action-icon">💊</span>
+                            <span>MEDISIN</span>
+                        </button>
+                        <button class="action-btn" onclick="doAction('drink')">
+                            <span class="action-icon">🥤</span>
+                            <span>DRIKKE</span>
+                        </button>
+                        <button class="action-btn magenta" onclick="doAction('food')">
+                            <span class="action-icon">🍽️</span>
+                            <span>MAT</span>
+                        </button>
+                        <button class="action-btn magenta" onclick="doAction('wash')">
+                            <span class="action-icon">🧼</span>
+                            <span>STELL</span>
+                        </button>
+                        <button class="action-btn" onclick="doAction('talk')">
+                            <span class="action-icon">💬</span>
+                            <span>SNAKK</span>
+                        </button>
+                        <button class="action-btn" onclick="doAction('vitals')">
+                            <span class="action-icon">📋</span>
+                            <span>VITALIA</span>
+                        </button>
+                        <button class="action-btn magenta" onclick="doAction('light')" id="light-btn">
+                            <span class="action-icon">🌙</span>
+                            <span>LYS AV</span>
+                        </button>
+                        <button class="action-btn magenta" onclick="doAction('comfort')">
+                            <span class="action-icon">🛏️</span>
+                            <span>KOMFORT</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Meldingslogg -->
+                <div class="info-box">
+                    <div class="info-label">MELDINGER</div>
+                    <div class="message-log" id="message-log">
+                        <p><span class="time">[00:00]</span> Velkommen! Ta godt vare på pasienten.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <div class="info-box">
+                    <div class="info-label">POENG</div>
+                    <div class="info-value" id="score">0</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">DAGER FRISK</div>
+                    <div class="info-value magenta" id="days-healthy">0</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-label">ACHIEVEMENTS</div>
+                    <div class="achievements-list" id="achievements">
+                        <div class="achievement" data-achievement="first-care" title="Første pleie">❤️</div>
+                        <div class="achievement" data-achievement="hydration-master" title="Hydrasjonsmester">💧</div>
+                        <div class="achievement" data-achievement="nutrition-pro" title="Ernæringsekspert">🍎</div>
+                        <div class="achievement" data-achievement="clean-streak" title="Renslighet">✨</div>
+                        <div class="achievement" data-achievement="good-mood" title="Humørspreder">😊</div>
+                        <div class="achievement" data-achievement="sleep-well" title="Søvnvokter">💤</div>
+                        <div class="achievement" data-achievement="survivor-1" title="1 dag overlevd">🏆</div>
+                        <div class="achievement" data-achievement="survivor-7" title="1 uke overlevd">🌟</div>
+                    </div>
+                </div>
+
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="saveGame()">LAGRE</button>
+                    <button class="control-btn danger" onclick="resetGame()">NULLSTILL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p class="footer-text">&copy; 2026 Jonas <span>_</span></p>
+    </footer>
+
+    <script>
+        // ========================================
+        // SPILL-TILSTAND
+        // ========================================
+        let gameState = {
+            health: 100,
+            hydration: 100,
+            nutrition: 100,
+            hygiene: 100,
+            mood: 100,
+            rest: 100,
+            score: 0,
+            daysHealthy: 0,
+            lightsOff: false,
+            isSleeping: false,
+            lastUpdate: Date.now(),
+            startTime: Date.now(),
+            achievements: [],
+            actionCounts: {
+                medicine: 0,
+                drink: 0,
+                food: 0,
+                wash: 0,
+                talk: 0,
+                vitals: 0,
+                light: 0,
+                comfort: 0
+            }
+        };
+
+        // Pasient-meldinger
+        const MESSAGES = {
+            thirsty: [
+                "Jeg er litt tørst...",
+                "Kan jeg få et glass vann?",
+                "Munnen min er så tørr.",
+                "Litt væske hadde vært godt."
+            ],
+            hungry: [
+                "Magen min rumler.",
+                "Jeg begynner å bli sulten.",
+                "Er det snart mat?",
+                "Jeg trenger noe å spise."
+            ],
+            dirty: [
+                "Jeg føler meg skitten.",
+                "Kan jeg få vaske meg?",
+                "Jeg trenger stell.",
+                "Det hadde vært godt å bli vasket."
+            ],
+            sad: [
+                "Jeg føler meg litt ensom.",
+                "Kan du sitte litt hos meg?",
+                "Jeg savner selskap.",
+                "Det er kjedelig å ligge her."
+            ],
+            tired: [
+                "Jeg er så sliten...",
+                "Kan du skru av lyset?",
+                "Jeg trenger å hvile.",
+                "Øynene mine er tunge."
+            ],
+            sick: [
+                "Jeg føler meg ikke bra.",
+                "Kan jeg få medisin?",
+                "Jeg har vondt.",
+                "Jeg tror jeg trenger hjelp."
+            ],
+            happy: [
+                "Tusen takk!",
+                "Du er en god sykepleier!",
+                "Jeg føler meg mye bedre.",
+                "Så hyggelig av deg!"
+            ],
+            sleeping: [
+                "Zzz...",
+                "*sover fredelig*",
+                "*puster rolig*"
+            ]
+        };
+
+        // DOM-elementer
+        const elements = {
+            patient: document.getElementById('patient'),
+            speechBubble: document.getElementById('speech-bubble'),
+            roomBg: document.getElementById('room-bg'),
+            windowEl: document.getElementById('window'),
+            actionEffect: document.getElementById('action-effect'),
+            messageLog: document.getElementById('message-log'),
+            alertOverlay: document.getElementById('alert-overlay'),
+            achievementPopup: document.getElementById('achievement-popup'),
+            achievementPopupIcon: document.getElementById('achievement-popup-icon'),
+            achievementPopupName: document.getElementById('achievement-popup-name'),
+            lightBtn: document.getElementById('light-btn'),
+            score: document.getElementById('score'),
+            daysHealthy: document.getElementById('days-healthy'),
+            // Status bars
+            healthBar: document.getElementById('health-bar'),
+            healthValue: document.getElementById('health-value'),
+            hydrationBar: document.getElementById('hydration-bar'),
+            hydrationValue: document.getElementById('hydration-value'),
+            nutritionBar: document.getElementById('nutrition-bar'),
+            nutritionValue: document.getElementById('nutrition-value'),
+            hygieneBar: document.getElementById('hygiene-bar'),
+            hygieneValue: document.getElementById('hygiene-value'),
+            moodBar: document.getElementById('mood-bar'),
+            moodValue: document.getElementById('mood-value'),
+            restBar: document.getElementById('rest-bar'),
+            restValue: document.getElementById('rest-value')
+        };
+
+        // ========================================
+        // SPILLLOGIKK
+        // ========================================
+
+        function updateStats() {
+            const now = Date.now();
+            const elapsed = (now - gameState.lastUpdate) / 1000; // sekunder
+            gameState.lastUpdate = now;
+
+            // Reduser stats over tid (saktere når pasienten sover)
+            const sleepMultiplier = gameState.isSleeping ? 0.3 : 1;
+            const decayRate = 0.5 * sleepMultiplier; // per sekund
+
+            gameState.hydration = Math.max(0, gameState.hydration - decayRate * elapsed * 0.8);
+            gameState.nutrition = Math.max(0, gameState.nutrition - decayRate * elapsed * 0.5);
+            gameState.hygiene = Math.max(0, gameState.hygiene - decayRate * elapsed * 0.3);
+            gameState.mood = Math.max(0, gameState.mood - decayRate * elapsed * 0.4);
+
+            // Hvile øker når lyset er av, synker når det er på
+            if (gameState.lightsOff) {
+                gameState.rest = Math.min(100, gameState.rest + elapsed * 2);
+                if (!gameState.isSleeping && gameState.rest > 20) {
+                    gameState.isSleeping = true;
+                    updatePatientState();
+                }
+            } else {
+                gameState.rest = Math.max(0, gameState.rest - decayRate * elapsed * 0.6);
+                if (gameState.isSleeping) {
+                    gameState.isSleeping = false;
+                    updatePatientState();
+                }
+            }
+
+            // Helse påvirkes av andre stats
+            const avgStats = (gameState.hydration + gameState.nutrition + gameState.hygiene + gameState.mood + gameState.rest) / 5;
+            if (avgStats < 30) {
+                gameState.health = Math.max(0, gameState.health - elapsed * 0.5);
+            } else if (avgStats > 70) {
+                gameState.health = Math.min(100, gameState.health + elapsed * 0.1);
+            }
+
+            // Poeng for god pleie
+            if (avgStats > 60) {
+                gameState.score += Math.floor(elapsed * 2);
+            }
+
+            // Beregn dager frisk
+            const totalSeconds = (now - gameState.startTime) / 1000;
+            if (gameState.health > 50) {
+                gameState.daysHealthy = Math.floor(totalSeconds / 60); // 1 minutt = 1 dag i spillet
+            }
+
+            updateUI();
+            checkAlerts();
+            checkAchievements();
+        }
+
+        function updateUI() {
+            // Oppdater status-barer
+            updateBar('health', gameState.health);
+            updateBar('hydration', gameState.hydration);
+            updateBar('nutrition', gameState.nutrition);
+            updateBar('hygiene', gameState.hygiene);
+            updateBar('mood', gameState.mood);
+            updateBar('rest', gameState.rest);
+
+            // Oppdater poeng og dager
+            elements.score.textContent = gameState.score;
+            elements.daysHealthy.textContent = gameState.daysHealthy;
+
+            // Oppdater pasient-utseende
+            updatePatientState();
+        }
+
+        function updateBar(stat, value) {
+            const bar = elements[stat + 'Bar'];
+            const valueEl = elements[stat + 'Value'];
+
+            bar.style.width = value + '%';
+            valueEl.textContent = Math.round(value) + '%';
+
+            // Fjern gamle klasser
+            bar.classList.remove('low', 'medium');
+
+            // Legg til farge basert på verdi
+            if (value < 25) {
+                bar.classList.add('low');
+            } else if (value < 50) {
+                bar.classList.add('medium');
+            }
+        }
+
+        function updatePatientState() {
+            const patient = elements.patient;
+            patient.classList.remove('sleeping', 'sad', 'hungry');
+
+            if (gameState.isSleeping) {
+                patient.classList.add('sleeping');
+            } else if (gameState.mood < 30) {
+                patient.classList.add('sad');
+            } else if (gameState.nutrition < 30) {
+                patient.classList.add('hungry');
+            }
+        }
+
+        function checkAlerts() {
+            const hasAlert = gameState.health < 25 ||
+                            gameState.hydration < 20 ||
+                            gameState.nutrition < 20 ||
+                            gameState.rest < 15;
+
+            if (hasAlert) {
+                elements.alertOverlay.classList.add('active');
+            } else {
+                elements.alertOverlay.classList.remove('active');
+            }
+
+            // Vis melding fra pasienten
+            if (!gameState.isSleeping && Math.random() < 0.01) {
+                showRandomMessage();
+            }
+        }
+
+        function showRandomMessage() {
+            let category = 'happy';
+
+            if (gameState.isSleeping) {
+                category = 'sleeping';
+            } else if (gameState.health < 30) {
+                category = 'sick';
+            } else if (gameState.hydration < 40) {
+                category = 'thirsty';
+            } else if (gameState.nutrition < 40) {
+                category = 'hungry';
+            } else if (gameState.hygiene < 40) {
+                category = 'dirty';
+            } else if (gameState.mood < 40) {
+                category = 'sad';
+            } else if (gameState.rest < 40) {
+                category = 'tired';
+            }
+
+            const messages = MESSAGES[category];
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            showSpeechBubble(message);
+        }
+
+        function showSpeechBubble(text) {
+            elements.speechBubble.textContent = text;
+            elements.speechBubble.classList.add('visible');
+
+            setTimeout(() => {
+                elements.speechBubble.classList.remove('visible');
+            }, 3000);
+        }
+
+        function showActionEffect(emoji) {
+            elements.actionEffect.textContent = emoji;
+            elements.actionEffect.classList.remove('animate');
+            void elements.actionEffect.offsetWidth; // Reflow
+            elements.actionEffect.classList.add('animate');
+        }
+
+        function addLogMessage(text) {
+            const now = new Date();
+            const time = now.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+            const p = document.createElement('p');
+            p.innerHTML = `<span class="time">[${time}]</span> ${text}`;
+            elements.messageLog.insertBefore(p, elements.messageLog.firstChild);
+
+            // Begrens antall meldinger
+            while (elements.messageLog.children.length > 20) {
+                elements.messageLog.removeChild(elements.messageLog.lastChild);
+            }
+        }
+
+        // ========================================
+        // HANDLINGER
+        // ========================================
+
+        function doAction(action) {
+            if (gameState.isSleeping && action !== 'light' && action !== 'vitals') {
+                showSpeechBubble("Shhh... pasienten sover.");
+                return;
+            }
+
+            gameState.actionCounts[action]++;
+            let message = '';
+            let emoji = '';
+
+            switch (action) {
+                case 'medicine':
+                    gameState.health = Math.min(100, gameState.health + 20);
+                    message = 'Ga medisin til pasienten.';
+                    emoji = '💊';
+                    showSpeechBubble('Takk, det hjelper!');
+                    break;
+
+                case 'drink':
+                    gameState.hydration = Math.min(100, gameState.hydration + 30);
+                    gameState.mood = Math.min(100, gameState.mood + 5);
+                    message = 'Ga drikke til pasienten.';
+                    emoji = '🥤';
+                    showSpeechBubble('Ahh, det var godt!');
+                    break;
+
+                case 'food':
+                    gameState.nutrition = Math.min(100, gameState.nutrition + 35);
+                    gameState.mood = Math.min(100, gameState.mood + 10);
+                    message = 'Ga mat til pasienten.';
+                    emoji = '🍽️';
+                    showSpeechBubble('Mmm, deilig!');
+                    break;
+
+                case 'wash':
+                    gameState.hygiene = Math.min(100, gameState.hygiene + 40);
+                    gameState.mood = Math.min(100, gameState.mood + 15);
+                    message = 'Stellet pasienten.';
+                    emoji = '🧼';
+                    showSpeechBubble('Så deilig å føle seg ren!');
+                    break;
+
+                case 'talk':
+                    gameState.mood = Math.min(100, gameState.mood + 25);
+                    message = 'Snakket med pasienten.';
+                    emoji = '💬';
+                    showSpeechBubble('Så hyggelig med besøk!');
+                    break;
+
+                case 'vitals':
+                    message = `Sjekket vitalia: Helse ${Math.round(gameState.health)}%, Puls normal.`;
+                    emoji = '📋';
+                    showSpeechBubble('Alt ser bra ut!');
+                    break;
+
+                case 'light':
+                    gameState.lightsOff = !gameState.lightsOff;
+                    elements.roomBg.classList.toggle('night', gameState.lightsOff);
+                    elements.windowEl.classList.toggle('night', gameState.lightsOff);
+                    elements.lightBtn.querySelector('.action-icon').textContent = gameState.lightsOff ? '☀️' : '🌙';
+                    elements.lightBtn.querySelector('span:last-child').textContent = gameState.lightsOff ? 'LYS PÅ' : 'LYS AV';
+                    message = gameState.lightsOff ? 'Skrudde av lyset.' : 'Skrudde på lyset.';
+                    emoji = gameState.lightsOff ? '🌙' : '☀️';
+                    if (gameState.lightsOff) {
+                        showSpeechBubble('God natt...');
+                    } else {
+                        showSpeechBubble('God morgen!');
+                    }
+                    break;
+
+                case 'comfort':
+                    gameState.mood = Math.min(100, gameState.mood + 15);
+                    gameState.rest = Math.min(100, gameState.rest + 10);
+                    message = 'Justerte puter og dyner.';
+                    emoji = '🛏️';
+                    showSpeechBubble('Mye bedre!');
+                    break;
+            }
+
+            showActionEffect(emoji);
+            addLogMessage(message);
+            gameState.score += 10;
+            updateUI();
+            saveGame();
+        }
+
+        // ========================================
+        // ACHIEVEMENTS
+        // ========================================
+
+        const ACHIEVEMENTS = {
+            'first-care': {
+                name: 'Første Pleie',
+                icon: '❤️',
+                check: () => Object.values(gameState.actionCounts).some(c => c > 0)
+            },
+            'hydration-master': {
+                name: 'Hydrasjonsmester',
+                icon: '💧',
+                check: () => gameState.actionCounts.drink >= 10
+            },
+            'nutrition-pro': {
+                name: 'Ernæringsekspert',
+                icon: '🍎',
+                check: () => gameState.actionCounts.food >= 10
+            },
+            'clean-streak': {
+                name: 'Renslighet',
+                icon: '✨',
+                check: () => gameState.actionCounts.wash >= 5
+            },
+            'good-mood': {
+                name: 'Humørspreder',
+                icon: '😊',
+                check: () => gameState.actionCounts.talk >= 10
+            },
+            'sleep-well': {
+                name: 'Søvnvokter',
+                icon: '💤',
+                check: () => gameState.rest >= 100
+            },
+            'survivor-1': {
+                name: '1 Dag Overlevd',
+                icon: '🏆',
+                check: () => gameState.daysHealthy >= 1
+            },
+            'survivor-7': {
+                name: '1 Uke Overlevd',
+                icon: '🌟',
+                check: () => gameState.daysHealthy >= 7
+            }
+        };
+
+        function checkAchievements() {
+            for (const [id, achievement] of Object.entries(ACHIEVEMENTS)) {
+                if (!gameState.achievements.includes(id) && achievement.check()) {
+                    unlockAchievement(id);
+                }
+            }
+        }
+
+        function unlockAchievement(id) {
+            gameState.achievements.push(id);
+            const achievement = ACHIEVEMENTS[id];
+
+            // Oppdater UI
+            const el = document.querySelector(`[data-achievement="${id}"]`);
+            if (el) {
+                el.classList.add('unlocked');
+            }
+
+            // Vis popup
+            elements.achievementPopupIcon.textContent = achievement.icon;
+            elements.achievementPopupName.textContent = achievement.name;
+            elements.achievementPopup.classList.add('visible');
+
+            setTimeout(() => {
+                elements.achievementPopup.classList.remove('visible');
+            }, 3000);
+
+            addLogMessage(`Achievement låst opp: ${achievement.name}!`);
+            gameState.score += 100;
+            saveGame();
+        }
+
+        function loadAchievements() {
+            gameState.achievements.forEach(id => {
+                const el = document.querySelector(`[data-achievement="${id}"]`);
+                if (el) {
+                    el.classList.add('unlocked');
+                }
+            });
+        }
+
+        // ========================================
+        // LAGRING
+        // ========================================
+
+        function saveGame() {
+            localStorage.setItem('patientTamagotchi', JSON.stringify(gameState));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('patientTamagotchi');
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                gameState = { ...gameState, ...loaded };
+
+                // Beregn tid som har gått
+                const elapsed = (Date.now() - gameState.lastUpdate) / 1000;
+
+                // Reduser stats basert på tid borte (maks 1 time)
+                const cappedElapsed = Math.min(elapsed, 3600);
+                const decay = cappedElapsed * 0.1;
+
+                gameState.hydration = Math.max(0, gameState.hydration - decay);
+                gameState.nutrition = Math.max(0, gameState.nutrition - decay * 0.5);
+                gameState.hygiene = Math.max(0, gameState.hygiene - decay * 0.3);
+                gameState.mood = Math.max(0, gameState.mood - decay * 0.5);
+                gameState.rest = Math.max(0, gameState.rest - decay * 0.3);
+
+                gameState.lastUpdate = Date.now();
+
+                // Oppdater lys-status i UI
+                if (gameState.lightsOff) {
+                    elements.roomBg.classList.add('night');
+                    elements.windowEl.classList.add('night');
+                    elements.lightBtn.querySelector('.action-icon').textContent = '☀️';
+                    elements.lightBtn.querySelector('span:last-child').textContent = 'LYS PÅ';
+                }
+
+                loadAchievements();
+                updateUI();
+
+                addLogMessage('Velkommen tilbake! Pasienten har ventet på deg.');
+
+                return true;
+            }
+            return false;
+        }
+
+        function resetGame() {
+            if (confirm('Er du sikker på at du vil nullstille spillet? All fremgang vil gå tapt.')) {
+                localStorage.removeItem('patientTamagotchi');
+                location.reload();
+            }
+        }
+
+        // ========================================
+        // INITIALISERING
+        // ========================================
+
+        function init() {
+            if (!loadGame()) {
+                addLogMessage('Ny pasient! Ta godt vare på dem.');
+            }
+
+            // Start spill-loop
+            setInterval(updateStats, 1000);
+
+            // Tilfeldige meldinger fra pasienten
+            setInterval(() => {
+                if (!gameState.isSleeping && Math.random() < 0.3) {
+                    showRandomMessage();
+                }
+            }, 15000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
